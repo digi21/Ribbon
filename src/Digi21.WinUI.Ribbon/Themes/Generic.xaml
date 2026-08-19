@@ -153,9 +153,6 @@
                                     </Storyboard>
                                 </VisualState>
                                 <VisualState x:Name="Selected">
-                                    <VisualState.Setters>
-                                        <Setter Target="Text.Foreground" Value="{ThemeResource RibbonTabSelectedForegroundBrush}" />
-                                    </VisualState.Setters>
                                     <Storyboard>
                                         <DoubleAnimation
                                             Storyboard.TargetName="SelectionIndicator"
