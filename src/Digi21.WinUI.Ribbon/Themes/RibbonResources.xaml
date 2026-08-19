@@ -1,0 +1,82 @@
+<!--
+    Every brush and metric the ribbon is painted with. Recolouring the library means redefining these
+    keys in the application's resources; retemplating is only needed to change the shape of a
+    control, not its colours.
+
+    This dictionary is merged into Application.Resources (see RibbonThemeResources), and not into
+    Themes/Generic.xaml, on purpose: a key defined in the same dictionary as the template that uses
+    it wins over anything the application declares, which would make the keys unoverridable. Merged
+    at the bottom of the collection, everything the application merges later, and every key it
+    declares directly, takes precedence over these defaults.
+
+    The three theme dictionaries are what makes an override follow the theme: a StaticResource inside
+    one resolves against that theme's system brushes, so the same key gives a different colour in
+    light, dark and high contrast.
+-->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectedForegroundBrush" ResourceKey="AccentTextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonTabPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonItemPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonItemPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonItemCheckedBackgroundBrush" ResourceKey="AccentFillColorDefaultBrush" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="Light">
+            <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectedForegroundBrush" ResourceKey="AccentTextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonTabPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonItemPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonItemPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonItemCheckedBackgroundBrush" ResourceKey="AccentFillColorDefaultBrush" />
+        </ResourceDictionary>
+
+        <ResourceDictionary x:Key="HighContrast">
+            <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectedForegroundBrush" ResourceKey="AccentTextFillColorPrimaryBrush" />
+            <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonTabPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
+
+            <StaticResource x:Key="RibbonItemPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
+            <StaticResource x:Key="RibbonItemPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
+            <StaticResource x:Key="RibbonItemCheckedBackgroundBrush" ResourceKey="AccentFillColorDefaultBrush" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <!-- The same in every theme, so outside the theme dictionaries. -->
+    <x:Double x:Key="RibbonTabSelectionIndicatorHeight">2</x:Double>
+    <CornerRadius x:Key="RibbonTabCornerRadius">4,4,0,0</CornerRadius>
+    <CornerRadius x:Key="RibbonItemCornerRadius">4</CornerRadius>
+    <Thickness x:Key="RibbonTabPadding">12,6</Thickness>
+
+</ResourceDictionary>

@@ -14,6 +14,7 @@ public partial class RibbonSeparator : Control
     /// <summary>Initializes a new instance of the <see cref="RibbonSeparator"/> class.</summary>
     public RibbonSeparator()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonSeparator);
         IsTabStop = false;
     }

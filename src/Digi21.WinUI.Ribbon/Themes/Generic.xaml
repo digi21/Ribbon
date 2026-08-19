@@ -17,7 +17,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:Ribbon">
-                    <Grid Background="{ThemeResource LayerFillColorDefaultBrush}">
+                    <Grid Background="{ThemeResource RibbonBackgroundBrush}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
@@ -30,7 +30,7 @@
 
                         <Border
                             Grid.Row="1"
-                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderBrush="{ThemeResource RibbonBorderBrush}"
                             BorderThickness="0,1,0,1">
                             <Grid x:Name="PART_Body" Padding="4" />
                         </Border>
@@ -53,32 +53,120 @@
     </Style>
 
     <Style TargetType="primitives:RibbonTabHeader">
-        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Padding" Value="{ThemeResource RibbonTabPadding}" />
+        <Setter Property="Foreground" Value="{ThemeResource RibbonTabForegroundBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="primitives:RibbonTabHeader">
-                    <Border
+                    <Grid
                         x:Name="Root"
-                        Padding="{TemplateBinding Padding}"
                         Background="Transparent"
-                        CornerRadius="4,4,0,0">
+                        CornerRadius="{ThemeResource RibbonTabCornerRadius}">
                         <TextBlock
                             x:Name="Text"
+                            Margin="{TemplateBinding Padding}"
+                            Foreground="{TemplateBinding Foreground}"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             Text="{Binding Label, RelativeSource={RelativeSource TemplatedParent}}" />
 
+                        <!--
+                            The mark of the tab on show. It is scaled rather than resized because a
+                            width animation is a layout animation: it would re-measure the strip
+                            sixty times a second, and the strip is where the whole ribbon decides
+                            what fits. A render transform costs the layout nothing.
+                        -->
+                        <Rectangle
+                            x:Name="SelectionIndicator"
+                            Height="{ThemeResource RibbonTabSelectionIndicatorHeight}"
+                            Margin="8,0"
+                            VerticalAlignment="Bottom"
+                            Fill="{ThemeResource RibbonTabSelectionIndicatorBrush}"
+                            Opacity="0"
+                            RadiusX="1"
+                            RadiusY="1"
+                            RenderTransformOrigin="0.5,0.5">
+                            <Rectangle.RenderTransform>
+                                <ScaleTransform x:Name="IndicatorScale" ScaleX="0.65" />
+                            </Rectangle.RenderTransform>
+                        </Rectangle>
+
                         <VisualStateManager.VisualStateGroups>
+                            <!--
+                                Two groups that never touch the same property, so they compose: the
+                                pointer decides how long the line is and whether the tab darkens,
+                                the selection decides whether the line is there at all. Hovering a
+                                tab that is not on show stretches a line nobody can see, which is
+                                free and keeps each group answerable to one question.
+                            -->
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IndicatorScale"
+                                            Storyboard.TargetProperty="ScaleX"
+                                            To="0.65"
+                                            Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonTabPointerOverBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IndicatorScale"
+                                            Storyboard.TargetProperty="ScaleX"
+                                            To="1"
+                                            Duration="0:0:0.15">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonTabPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="IndicatorScale"
+                                            Storyboard.TargetProperty="ScaleX"
+                                            To="1"
+                                            Duration="0:0:0.1" />
+                                    </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+
                             <VisualStateGroup x:Name="SelectionStates">
-                                <VisualState x:Name="Unselected" />
+                                <VisualState x:Name="Unselected">
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="SelectionIndicator"
+                                            Storyboard.TargetProperty="Opacity"
+                                            To="0"
+                                            Duration="0:0:0.1" />
+                                    </Storyboard>
+                                </VisualState>
                                 <VisualState x:Name="Selected">
                                     <VisualState.Setters>
-                                        <Setter Target="Root.Background" Value="{ThemeResource LayerFillColorDefaultBrush}" />
-                                        <Setter Target="Text.FontWeight" Value="SemiBold" />
+                                        <Setter Target="Text.Foreground" Value="{ThemeResource RibbonTabSelectedForegroundBrush}" />
                                     </VisualState.Setters>
+                                    <Storyboard>
+                                        <DoubleAnimation
+                                            Storyboard.TargetName="SelectionIndicator"
+                                            Storyboard.TargetProperty="Opacity"
+                                            To="1"
+                                            Duration="0:0:0.1" />
+                                    </Storyboard>
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                    </Border>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -119,7 +207,7 @@
                             Grid.Row="1"
                             HorizontalAlignment="Center"
                             Style="{ThemeResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            Foreground="{ThemeResource RibbonGroupLabelForegroundBrush}" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -133,8 +221,32 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:RibbonButton">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                    <Border
+                        x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{ThemeResource RibbonItemCornerRadius}">
                         <primitives:RibbonItemContent x:Name="PART_Content" />
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPointerOverBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -151,15 +263,42 @@
                     <Border
                         x:Name="Root"
                         Background="{TemplateBinding Background}"
-                        CornerRadius="4">
+                        CornerRadius="{ThemeResource RibbonItemCornerRadius}">
                         <primitives:RibbonItemContent x:Name="PART_Content" />
 
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPointerOverBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
                                 <VisualState x:Name="Checked">
                                     <VisualState.Setters>
-                                        <Setter Target="Root.Background" Value="{ThemeResource AccentFillColorDefaultBrush}" />
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemCheckedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemCheckedBackgroundBrush}" />
+                                        <Setter Target="Root.Opacity" Value="0.9" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="CheckedPressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemCheckedBackgroundBrush}" />
+                                        <Setter Target="Root.Opacity" Value="0.8" />
                                     </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>
@@ -177,7 +316,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:RibbonDropDownButton">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="{ThemeResource RibbonItemCornerRadius}">
                         <StackPanel Orientation="Horizontal">
                             <primitives:RibbonItemContent x:Name="PART_Content" />
                             <FontIcon
@@ -222,7 +361,7 @@
                         <Rectangle
                             Width="1"
                             HorizontalAlignment="Center"
-                            Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />
+                            Fill="{ThemeResource RibbonSeparatorBrush}" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

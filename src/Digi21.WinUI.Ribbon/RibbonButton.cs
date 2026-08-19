@@ -24,6 +24,7 @@ public partial class RibbonButton : Button, IRibbonItem
     /// <summary>Initializes a new instance of the <see cref="RibbonButton"/> class.</summary>
     public RibbonButton()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonButton);
         chrome = new RibbonItemChrome(this, () => Label, () => IconSource);
         Ribbon.SetAllowedSizes(this, RibbonItemSizes.All);

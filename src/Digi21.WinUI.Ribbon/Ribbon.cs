@@ -61,6 +61,7 @@ public partial class Ribbon : Control
     /// <summary>Initializes a new instance of the <see cref="Ribbon"/> class.</summary>
     public Ribbon()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(Ribbon);
         tabs.CollectionChanged += OnTabsChanged;
     }

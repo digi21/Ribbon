@@ -25,6 +25,7 @@ public partial class RibbonTab : Control
     /// <summary>Initializes a new instance of the <see cref="RibbonTab"/> class.</summary>
     public RibbonTab()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonTab);
         groups.CollectionChanged += OnGroupsChanged;
     }

@@ -27,6 +27,7 @@ public partial class RibbonToggleButton : ToggleButton, IRibbonItem
     /// <summary>Initializes a new instance of the <see cref="RibbonToggleButton"/> class.</summary>
     public RibbonToggleButton()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonToggleButton);
         chrome = new RibbonItemChrome(this, () => Label, () => IconSource);
         Ribbon.SetAllowedSizes(this, RibbonItemSizes.All);

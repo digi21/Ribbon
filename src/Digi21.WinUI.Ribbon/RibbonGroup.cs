@@ -69,6 +69,7 @@ public partial class RibbonGroup : Control
     /// <summary>Initializes a new instance of the <see cref="RibbonGroup"/> class.</summary>
     public RibbonGroup()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonGroup);
         items.CollectionChanged += OnItemsChanged;
     }

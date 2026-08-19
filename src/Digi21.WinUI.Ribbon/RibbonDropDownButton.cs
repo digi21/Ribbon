@@ -24,6 +24,7 @@ public partial class RibbonDropDownButton : DropDownButton, IRibbonItem
     /// <summary>Initializes a new instance of the <see cref="RibbonDropDownButton"/> class.</summary>
     public RibbonDropDownButton()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonDropDownButton);
         chrome = new RibbonItemChrome(this, () => Label, () => IconSource);
         Ribbon.SetAllowedSizes(this, RibbonItemSizes.All);

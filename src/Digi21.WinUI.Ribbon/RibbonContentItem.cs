@@ -35,6 +35,7 @@ public partial class RibbonContentItem : ContentControl, IRibbonItem
     /// <summary>Initializes a new instance of the <see cref="RibbonContentItem"/> class.</summary>
     public RibbonContentItem()
     {
+        RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonContentItem);
         Ribbon.SetAllowedSizes(this, RibbonItemSizes.Normal);
 
