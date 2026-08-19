@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Digi21.WinUI.Ribbon;
@@ -27,6 +28,10 @@ public partial class RibbonContentItem : ContentControl, IRibbonItem
     public static readonly DependencyProperty IconSourceProperty =
         DependencyProperty.Register(nameof(IconSource), typeof(Microsoft.UI.Xaml.Controls.IconSource), typeof(RibbonContentItem), new PropertyMetadata(null));
 
+    private const string LabelPart = "PART_Label";
+
+    private TextBlock? labelText;
+
     /// <summary>Initializes a new instance of the <see cref="RibbonContentItem"/> class.</summary>
     public RibbonContentItem()
     {
@@ -53,8 +58,50 @@ public partial class RibbonContentItem : ContentControl, IRibbonItem
         set => SetValue(IconSourceProperty, value);
     }
 
+    /// <inheritdoc/>
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+
+        labelText = GetTemplateChild(LabelPart) as TextBlock;
+        NameTheContent();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnContentChanged(object oldContent, object newContent)
+    {
+        base.OnContentChanged(oldContent, newContent);
+        NameTheContent();
+    }
+
     private static void OnLabelChanged(DependencyObject item, DependencyPropertyChangedEventArgs arguments)
     {
-        ((RibbonContentItem)item).InvalidateMeasure();
+        var host = (RibbonContentItem)item;
+
+        host.NameTheContent();
+        host.InvalidateMeasure();
+    }
+
+    // The host is chrome; what a driver finds and a screen reader reads is the control inside it,
+    // and a NumberBox dropped into a ribbon arrives with no name of its own at all. The probe found
+    // that gap the first time it was asked, and this is the answer: the label beside the control is
+    // what names it.
+    //
+    // Tied to the label rather than copied from it. A copy would go stale, and it would also be the
+    // wrong thing to hand a screen reader, which wants to be told that this text labels that field
+    // rather than hearing the same words twice.
+    //
+    // Never over an application that has already said something itself.
+    private void NameTheContent()
+    {
+        if (labelText is null || Content is not UIElement content)
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(AutomationProperties.GetName(content)) && AutomationProperties.GetLabeledBy(content) is null)
+        {
+            AutomationProperties.SetLabeledBy(content, labelText);
+        }
     }
 }

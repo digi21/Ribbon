@@ -200,6 +200,7 @@
                         Orientation="Horizontal"
                         Spacing="6">
                         <TextBlock
+                            x:Name="PART_Label"
                             VerticalAlignment="Center"
                             Style="{ThemeResource CaptionTextBlockStyle}"
                             Text="{Binding Label, RelativeSource={RelativeSource TemplatedParent}}" />
