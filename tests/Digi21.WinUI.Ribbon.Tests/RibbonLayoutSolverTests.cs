@@ -129,6 +129,49 @@ public class RibbonLayoutSolverTests
     }
 
     [Fact]
+    public void NoButtonDropsItsName_UntilThereIsNothingElseLeftToTry()
+    {
+        // A folded button without its name is the least identifiable state there is: an icon on its
+        // own, with nothing to say which group it belongs to. It has to be the last thing tried for
+        // the whole strip, not another rung among the others.
+        //
+        // The third group here is two buttons wide, so it is narrower than a button carrying its
+        // name and never folds. That is what makes this test worth running: the labels come off
+        // while it is still on the strip, so the assertions below have something to look at.
+        RibbonGroupMetrics[] strip =
+        [
+            Group(0),
+            Group(10),
+            new RibbonGroupMetrics(20, Chrome, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]),
+        ];
+
+        int inspected = 0;
+
+        foreach (RibbonGroupArrangement[] state in RibbonLayoutSolver.States(strip))
+        {
+            if (!state.Any(group => group.IsCollapsed && !group.ShowsCollapsedLabel))
+            {
+                continue;
+            }
+
+            for (int i = 0; i < state.Length; i++)
+            {
+                if (state[i].IsCollapsed)
+                {
+                    continue;
+                }
+
+                inspected++;
+
+                Assert.Equal(RibbonLayoutSolver.SizesUnder(strip[i], RibbonItemSize.Small), state[i].ItemSizes);
+                Assert.False(strip[i].CollapsedWidth < state[i].Width, $"group {i} could still have folded");
+            }
+        }
+
+        Assert.True(inspected > 0, "no state had a name dropped while a group was still on the strip");
+    }
+
+    [Fact]
     public void EveryStateOnlyDegradesTheOneBeforeIt()
     {
         // The invariant everything else rests on, asserted on the sequence itself instead of being
