@@ -145,30 +145,55 @@ public class RibbonLayoutSolverTests
             new RibbonGroupMetrics(20, Chrome, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]),
         ];
 
+        // Asserted step by step rather than at the index the first name went: a property of every
+        // transition holds however long the sequence gets, and it fails naming the step instead of
+        // a state number that moves whenever the algorithm is touched.
+        RibbonGroupArrangement[]? previous = null;
+        int drops = 0;
         int inspected = 0;
 
         foreach (RibbonGroupArrangement[] state in RibbonLayoutSolver.States(strip))
         {
-            if (!state.Any(group => group.IsCollapsed && !group.ShowsCollapsedLabel))
+            if (previous is { } before)
             {
-                continue;
-            }
-
-            for (int i = 0; i < state.Length; i++)
-            {
-                if (state[i].IsCollapsed)
+                int dropped = -1;
+                for (int i = 0; i < state.Length; i++)
                 {
-                    continue;
+                    if (before[i].ShowsCollapsedLabel && !state[i].ShowsCollapsedLabel)
+                    {
+                        dropped = i;
+                    }
                 }
 
-                inspected++;
+                if (dropped >= 0)
+                {
+                    drops++;
 
-                Assert.Equal(RibbonLayoutSolver.SizesUnder(strip[i], RibbonItemSize.Small), state[i].ItemSizes);
-                Assert.False(strip[i].CollapsedWidth < state[i].Width, $"group {i} could still have folded");
+                    for (int i = 0; i < before.Length; i++)
+                    {
+                        if (before[i].IsCollapsed)
+                        {
+                            continue;
+                        }
+
+                        inspected++;
+
+                        Assert.True(
+                            before[i].ItemSizes.SequenceEqual(RibbonLayoutSolver.SizesUnder(strip[i], RibbonItemSize.Small)),
+                            $"group {dropped} lost its name while group {i} could still have shrunk");
+
+                        Assert.False(
+                            strip[i].CollapsedWidth < before[i].Width,
+                            $"group {dropped} lost its name while group {i} could still have folded");
+                    }
+                }
             }
+
+            previous = state;
         }
 
-        Assert.True(inspected > 0, "no state had a name dropped while a group was still on the strip");
+        Assert.True(drops > 0, "no step in the sequence dropped a name");
+        Assert.True(inspected > 0, "no name was dropped while a group was still on the strip");
     }
 
     [Fact]
