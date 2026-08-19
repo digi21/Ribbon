@@ -64,6 +64,23 @@ what the library is measured against:
 dotnet add package Digi21.WinUI.Ribbon
 ```
 
+### Other languages
+
+The ribbon does not translate what you put in it: the name of a tab, of a group, of an item is yours
+and arrives already in the user's language, because only your application knows what it is saying.
+
+What the ribbon says on its own account is four sentences, and two of them are never seen — they are
+what a screen reader is told about a group's launcher and about the button a folded group becomes.
+They are properties on `RibbonStrings`, set once from wherever you keep your translations:
+
+```csharp
+RibbonStrings.GroupLauncherNameFormat = "Opciones de {0}";
+```
+
+[docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all four
+in Catalan, English, Basque, French, Galician, German, Italian, Portuguese and Spanish, each using
+the word Office uses in that language rather than a translation of the English one.
+
 ## Status
 
 The API is being designed and nothing has been released. The version this repository builds is

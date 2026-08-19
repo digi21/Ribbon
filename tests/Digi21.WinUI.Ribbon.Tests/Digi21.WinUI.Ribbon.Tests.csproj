@@ -16,4 +16,13 @@
     <ProjectReference Include="..\..\src\Digi21.WinUI.Ribbon\Digi21.WinUI.Ribbon.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      The translation guide is a file nothing compiles, so a string added to RibbonStrings would
+      arrive untranslated in nine languages with nothing to say so. Copying it beside the tests is
+      what lets LocalisationTests read it and make that a red build.
+    -->
+    <None Include="..\..\docs\localisation.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
