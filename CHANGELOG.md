@@ -37,6 +37,12 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   a tab of forty-pixel rows, and a stack of three labelled controls handed over as a single element
   is a column three rows deep: the ribbon is the height of the stack, once, not three times, and not
   two thirds of it with the first and last control cut off.
+- A group applies its template before the layout reads anything off it, so that the first pass is as
+  good as any later one. A control WinUI has never measured has no template - no name to put a floor
+  under its group's width, and no parts to fold with - and a window that opens at the width it stays
+  at gets that pass and no other: the strip was laid out on the understanding that a group had
+  folded while the group drew itself open, and the difference went off the right-hand edge with a
+  command on it.
 - `RibbonItemSize` and `RibbonItemSizes`: the three shapes an item can take, and the set of them an
   item declares it accepts.
 - The layout that decides between those shapes, ahead of the control that will use it. Items step

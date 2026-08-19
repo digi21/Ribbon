@@ -79,6 +79,18 @@ public partial class RibbonGroup : Control
     // the layout would be told the group costs zero and would never bring it back.
     private RibbonItemMetrics[]? measured;
 
+    // The last thing the layout asked for, so that a template arriving afterwards is folded the way
+    // the strip already decided rather than opening the group back up.
+    private bool showsCollapsedLabel = true;
+
+    // How wide the group's name is, remembered from when it was last on show. A folded group hides
+    // its name, and a hidden TextBlock measures nothing: read straight off, a group would report a
+    // floor of zero the moment it folded and the strip would be laid out from a number that depends
+    // on what it last did rather than on what the group says. It is the trap the item metrics fell
+    // into, one control along - and it showed as a folded button drawn with its name in a window
+    // dragged narrow and without it in a window opened narrow, at the same width.
+    private double nameWidth;
+
     /// <summary>Occurs when the launcher is pressed, for a group that opens a dialog rather than a flyout.</summary>
     public event TypedEventHandler<RibbonGroup, RoutedEventArgs>? LauncherClick;
 
@@ -167,22 +179,36 @@ public partial class RibbonGroup : Control
 
         Sync();
         UpdateChrome();
+
+        // The strip may already have decided this group is folded - the layout runs before a control
+        // that has never been measured has a template - and the parts that do the folding have only
+        // just appeared. Without this the group would draw itself open in a strip laid out on the
+        // understanding that it was shut, and overflow the width by its whole expanded self.
+        Fold(IsCollapsed, showsCollapsedLabel);
     }
 
     // Everything the layout needs to know about this group, measured now.
     internal RibbonGroupMetrics CollectMetrics()
     {
+        // Before anything is read off it. A control WinUI has not measured yet has no template, and
+        // a group with no template has no name to put a floor under its width and no parts to fold
+        // with - so the first pass would decide the strip from numbers belonging to a group that
+        // cannot draw itself, and the first pass is the whole layout for a window that opens at the
+        // width it stays at.
+        ApplyTemplate();
+
         if (!IsCollapsed || measured is null)
         {
             measured = MeasureItems();
         }
 
-        double labelWidth = 0;
-        if (labelText is not null)
+        if (labelText is { Visibility: Visibility.Visible })
         {
             labelText.Measure(new Size(double.PositiveInfinity, RibbonMetrics.GroupLabelHeight));
-            labelWidth = labelText.DesiredSize.Width;
+            nameWidth = labelText.DesiredSize.Width;
         }
+
+        double labelWidth = nameWidth;
 
         // The launcher sits beside the name, so it widens the floor the name puts under the group
         // rather than being paid for somewhere else. Leaving it out of the sum would have the layout
@@ -285,6 +311,7 @@ public partial class RibbonGroup : Control
     private void Fold(bool collapsed, bool showsLabel)
     {
         IsCollapsed = collapsed;
+        showsCollapsedLabel = showsLabel;
 
         if (collapsedContent is not null)
         {
@@ -351,6 +378,14 @@ public partial class RibbonGroup : Control
     private void UpdateChrome()
     {
         measured = null;
+
+        // Only while the name is on show, because that is the only state it can be measured in. A
+        // group renamed while it is folded keeps the width of the name it had until it opens again,
+        // which is one pass of one width out rather than a floor of nothing.
+        if (labelText is { Visibility: Visibility.Visible })
+        {
+            nameWidth = 0;
+        }
 
         if (labelText is not null)
         {
