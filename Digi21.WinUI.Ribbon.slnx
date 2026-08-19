@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/RibbonGallery/RibbonGallery.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Digi21.WinUI.Ribbon/Digi21.WinUI.Ribbon.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Digi21.WinUI.Ribbon.Tests/Digi21.WinUI.Ribbon.Tests.csproj" />
+  </Folder>
+</Solution>

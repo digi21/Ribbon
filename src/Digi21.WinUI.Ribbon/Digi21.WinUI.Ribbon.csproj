@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Digi21.WinUI.Ribbon</RootNamespace>
+    <UseWinUI>true</UseWinUI>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Packaging">
+    <PackageId>Digi21.WinUI.Ribbon</PackageId>
+    <Description>An Office-style ribbon for WinUI 3: tabs and groups that degrade as the window narrows - items step down through their size variants and a group that no longer fits collapses into a drop-down button instead of disappearing - with exactly one live instance per item, hosted WinUI controls that keep the focus, and a programmatic API on a par with the XAML one.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>winui;winui3;ribbon;toolbar;commandbar;office;adaptive;windows-app-sdk;windowsappsdk</PackageTags>
+    <PackageProjectUrl>https://github.com/digi21/Ribbon</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/digi21/Ribbon</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+
+    <!--
+      A tagged commit builds as exactly that version; every build after it is a pre-release of the
+      next one - 0.1.0-dev.1, 0.1.0-dev.2, and so on, where the number is how many commits there
+      have been since the tag. Each one is a distinct version, so a local feed can hold several and
+      a consumer picks a new one up without anybody having to clear the NuGet cache.
+
+      The minimum below is what an untagged repository builds as, and this one has no tag yet: the
+      API is not settled, so nothing here is v1. The first tag is what decides from then on.
+    -->
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="MinVer" Version="6.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Digi21.WinUI.Ribbon.Tests" />
+  </ItemGroup>
+
+</Project>
