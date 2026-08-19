@@ -15,8 +15,13 @@ public class LocalisationTests
 {
     private static readonly string[] Languages = ["ca", "en", "eu", "fr", "gl", "de", "it", "pt", "es"];
 
+    // Read with the line endings taken out, because they are not the same everywhere the tests run.
+    // A working tree that has never been through a checkout keeps whatever it was written with, and
+    // a fresh checkout on Windows turns it into CRLF - and `$` in .NET matches before the newline,
+    // which with CRLF is after the carriage return rather than after the last character of the line.
+    // These tests passed here and failed on the first build server that saw them.
     private static readonly string Guide =
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "localisation.md"));
+        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "localisation.md")).Replace("\r\n", "\n", StringComparison.Ordinal);
 
     public static TheoryData<string> EveryLanguage => [.. Languages];
 
