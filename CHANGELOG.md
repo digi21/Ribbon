@@ -11,6 +11,14 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 
 ### Added
 
+- The control: `Ribbon`, `RibbonTab`, `RibbonGroup`, `RibbonButton`, `RibbonToggleButton`,
+  `RibbonDropDownButton`, `RibbonContentItem` and `RibbonSeparator`, with `IRibbonItem` as what the
+  item types share. Each derives from the WinUI control that already behaves correctly — a
+  `Button`, a `ToggleButton`, a `DropDownButton` — so `InvokePattern`, `TogglePattern`, commands and
+  keyboard activation are WinUI's rather than this library's. A group takes any `UIElement` at all,
+  so a `NumberBox` needs no wrapper and keeps its focus.
+- `Ribbon.AllowedSizes`, attached, for declaring which shapes an item accepts, and `Ribbon.GetSize`
+  for reading the one it was given.
 - `RibbonItemSize` and `RibbonItemSizes`: the three shapes an item can take, and the set of them an
   item declares it accepts.
 - The layout that decides between those shapes, ahead of the control that will use it. Items step

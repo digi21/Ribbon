@@ -201,34 +201,30 @@ internal static class RibbonLayoutSolver
     // label in a column of three widens all three.
     internal static double Measure(in RibbonGroupMetrics group, RibbonItemSize cap, int maxRows = MaxRows, double columnSpacing = ColumnSpacing)
     {
-        double items = 0;
-        double column = 0;
-        int rows = 0;
-        int columns = 0;
+        var rows = new int[group.Items.Count];
+        var widths = new double[group.Items.Count];
 
-        foreach (RibbonItemMetrics item in group.Items)
+        for (int i = 0; i < group.Items.Count; i++)
         {
-            RibbonItemSize size = item.SizeUnder(cap);
-            int itemRows = item.RowsAt(size, maxRows);
-
-            if (rows > 0 && rows + itemRows > maxRows)
-            {
-                items += column;
-                columns++;
-                column = 0;
-                rows = 0;
-            }
-
-            column = Math.Max(column, item.WidthAt(size));
-            rows += itemRows;
+            RibbonItemSize size = group.Items[i].SizeUnder(cap);
+            rows[i] = group.Items[i].RowsAt(size, maxRows);
+            widths[i] = group.Items[i].WidthAt(size);
         }
 
-        if (rows > 0)
+        int[] placement = RibbonColumnPacker.Pack(rows, maxRows, out int columns);
+
+        var columnWidths = new double[columns];
+        for (int i = 0; i < placement.Length; i++)
         {
-            items += column;
-            columns++;
+            columnWidths[placement[i]] = Math.Max(columnWidths[placement[i]], widths[i]);
         }
 
-        return group.ChromeWidth + items + (columns > 1 ? (columns - 1) * columnSpacing : 0);
+        double total = 0;
+        foreach (double width in columnWidths)
+        {
+            total += width;
+        }
+
+        return group.ChromeWidth + total + (columns > 1 ? (columns - 1) * columnSpacing : 0);
     }
 }

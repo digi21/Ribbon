@@ -179,7 +179,7 @@ public class RibbonLayoutSolverTests
                         inspected++;
 
                         Assert.True(
-                            before[i].ItemSizes.SequenceEqual(RibbonLayoutSolver.SizesUnder(strip[i], RibbonItemSize.Small)),
+                            before[i].ItemSizes.SequenceEqual(SmallestShapes(strip[i])),
                             $"group {dropped} lost its name while group {i} could still have shrunk");
 
                         Assert.False(
@@ -369,6 +369,27 @@ public class RibbonLayoutSolverTests
         Group(second),
         Group(third),
     ];
+
+    // The smallest shape each item of a group accepts, worked out here from the metrics rather than
+    // by calling the helper the solver decides with. A test that reuses the code under test agrees
+    // with it even when both are wrong, and says so in green.
+    private static RibbonItemSize[] SmallestShapes(RibbonGroupMetrics group)
+    {
+        var sizes = new RibbonItemSize[group.Items.Count];
+
+        for (int i = 0; i < group.Items.Count; i++)
+        {
+            RibbonItemMetrics item = group.Items[i];
+
+            sizes[i] = item.IsSeparator || item.AllowedSizes == RibbonItemSizes.None
+                ? RibbonItemSize.Normal
+                : item.AllowedSizes.HasFlag(RibbonItemSizes.Small) ? RibbonItemSize.Small
+                : item.AllowedSizes.HasFlag(RibbonItemSizes.Normal) ? RibbonItemSize.Normal
+                : RibbonItemSize.Large;
+        }
+
+        return sizes;
+    }
 
     private static RibbonGroupMetrics Group(int priority) =>
         new(priority, Chrome, CollapsedWidth, CollapsedIconWidth,
