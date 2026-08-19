@@ -96,17 +96,91 @@ public class RibbonLayoutSolverTests
     }
 
     [Fact]
-    public void WhenEveryGroupHasCollapsed_TheButtonsDropTheirLabels()
+    public void WhenFoldingIsNotEnough_TheButtonsDropTheirLabelsOneAtATime()
     {
+        // A strip only loses the names it has to, in the same priority order as everything else.
         RibbonLayout layout = RibbonLayoutSolver.Solve(Strip(), 200);
 
-        Assert.Equal(124, layout.Width);
-        Assert.All(layout.Groups, group =>
+        Assert.Equal(192, layout.Width);
+        Assert.All(layout.Groups, group => Assert.True(group.IsCollapsed));
+
+        Assert.False(layout.Groups[0].ShowsCollapsedLabel);
+        Assert.Equal(CollapsedIconWidth, layout.Groups[0].Width);
+
+        Assert.True(layout.Groups[1].ShowsCollapsedLabel);
+        Assert.True(layout.Groups[2].ShowsCollapsedLabel);
+        Assert.Equal(CollapsedWidth, layout.Groups[2].Width);
+    }
+
+    [Fact]
+    public void AButtonWhoseIconIsNoNarrowerThanItsName_KeepsTheName()
+    {
+        // Nothing is assumed about the numbers the control hands over. A button that gains no width
+        // by dropping its label keeps the label, which is more use for the same room.
+        var group = new RibbonGroupMetrics(0, Chrome, CollapsedWidth, CollapsedIconWidth: CollapsedWidth,
+            [Button(), Button(), Button(), Button(), Button()]);
+
+        RibbonLayout layout = RibbonLayoutSolver.Solve([group], 0);
+
+        Assert.True(layout.Groups[0].IsCollapsed);
+        Assert.True(layout.Groups[0].ShowsCollapsedLabel);
+        Assert.Equal(CollapsedWidth, layout.Groups[0].Width);
+        Assert.True(layout.Overflows);
+    }
+
+    [Fact]
+    public void EveryStateOnlyDegradesTheOneBeforeIt()
+    {
+        // The invariant everything else rests on, asserted on the sequence itself instead of being
+        // inferred from wherever a sweep of widths happened to stop.
+        //
+        // Note what is deliberately not asserted: that each state is narrower overall. A cap step
+        // may widen a group whose Normal label runs longer on one row than its Large one does
+        // wrapped, and that is allowed, because Solve never returns a state without first measuring
+        // it against the width it was given. What may not happen is a step that degrades a group and
+        // charges more for it.
+        RibbonGroupArrangement[]? previous = null;
+        int index = 0;
+
+        foreach (RibbonGroupArrangement[] state in RibbonLayoutSolver.States(Strip()))
         {
-            Assert.True(group.IsCollapsed);
-            Assert.False(group.ShowsCollapsedLabel);
-            Assert.Equal(CollapsedIconWidth, group.Width);
-        });
+            if (previous is { } before)
+            {
+                for (int i = 0; i < state.Length; i++)
+                {
+                    Assert.True(!before[i].IsCollapsed || state[i].IsCollapsed, $"group {i} came back out at state {index}");
+                    Assert.True(before[i].ShowsCollapsedLabel || !state[i].ShowsCollapsedLabel, $"group {i} got its label back at state {index}");
+
+                    if (!before[i].IsCollapsed && state[i].IsCollapsed)
+                    {
+                        Assert.True(state[i].Width < before[i].Width, $"folding group {i} made it wider at state {index}");
+                    }
+
+                    if (before[i].ShowsCollapsedLabel && !state[i].ShowsCollapsedLabel)
+                    {
+                        Assert.True(state[i].Width < before[i].Width, $"dropping group {i}'s label made it wider at state {index}");
+                    }
+
+                    // A folded group's items are reported at the size its flyout shows them, so only
+                    // a group that is on the strip in both states has an on-screen shape to compare.
+                    if (before[i].IsCollapsed || state[i].IsCollapsed)
+                    {
+                        continue;
+                    }
+
+                    for (int j = 0; j < state[i].ItemSizes.Count; j++)
+                    {
+                        Assert.True(state[i].ItemSizes[j] <= before[i].ItemSizes[j], $"item {i}.{j} grew at state {index}");
+                    }
+                }
+            }
+
+            previous = state;
+            index++;
+        }
+
+        // Six shrinks, three folds, three labels and the state they all started from.
+        Assert.Equal(13, index);
     }
 
     [Fact]
@@ -119,7 +193,12 @@ public class RibbonLayoutSolverTests
         Assert.True(layout.Overflows);
         Assert.Equal(124, layout.Width);
         Assert.Equal(3, layout.Groups.Count);
-        Assert.All(layout.Groups, group => Assert.True(group.Width > 0));
+        Assert.All(layout.Groups, group =>
+        {
+            Assert.True(group.IsCollapsed);
+            Assert.False(group.ShowsCollapsedLabel);
+            Assert.Equal(CollapsedIconWidth, group.Width);
+        });
     }
 
     [Fact]

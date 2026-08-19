@@ -16,6 +16,7 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 - The layout that decides between those shapes, ahead of the control that will use it. Items step
   down through the shapes they accept before any group gives up; the group with the lowest priority
   gives way first and ties are broken from the right; a group that no longer fits folds into a
-  button instead of leaving the strip; and the last resort is those buttons dropping their labels.
-  It is a function of the width available and of nothing else, which is what keeps the arrangement
-  stable, reversible and free of flicker.
+  button instead of leaving the strip; and the last resort is those buttons dropping their labels,
+  one at a time and in the same order. The arrangements are generated without reference to the width
+  available, which only chooses which of them to stop at, and that is what keeps the result stable,
+  reversible and free of flicker.
