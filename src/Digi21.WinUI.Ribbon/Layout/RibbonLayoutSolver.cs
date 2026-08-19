@@ -198,7 +198,7 @@ internal static class RibbonLayoutSolver
 
     // How wide a group is with every item at the shape the cap leaves it, packed into columns of at
     // most maxRows rows. A column is as wide as the widest item in it, which is why a single long
-    // label in a column of three widens all three.
+    // label in a column of three widens all three, and no group is ever narrower than its own name.
     internal static double Measure(in RibbonGroupMetrics group, RibbonItemSize cap, int maxRows = MaxRows, double columnSpacing = ColumnSpacing)
     {
         var rows = new int[group.Items.Count];
@@ -225,6 +225,9 @@ internal static class RibbonLayoutSolver
             total += width;
         }
 
-        return group.ChromeWidth + total + (columns > 1 ? (columns - 1) * columnSpacing : 0);
+        total += columns > 1 ? (columns - 1) * columnSpacing : 0;
+
+        // The floor. It is the same at every cap, so squeezing a group still never widens it.
+        return group.ChromeWidth + Math.Max(total, group.LabelWidth);
     }
 }

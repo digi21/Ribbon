@@ -111,13 +111,15 @@
                             <primitives:RibbonItemContent x:Name="PART_CollapsedContent" />
                         </Button>
 
+                        <!-- Not trimmed, and it never needs to be: the layout takes this text's
+                             width as a floor for the whole group, so the name of a group is always
+                             readable however hard the ribbon is squeezed. -->
                         <TextBlock
                             x:Name="PART_Label"
                             Grid.Row="1"
                             HorizontalAlignment="Center"
                             Style="{ThemeResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            TextTrimming="CharacterEllipsis" />
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

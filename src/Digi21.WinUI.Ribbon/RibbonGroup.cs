@@ -141,8 +141,6 @@ public partial class RibbonGroup : Control
             labelWidth = labelText.DesiredSize.Width;
         }
 
-        // The chrome is a constant because the name under a group is allowed to be trimmed: a group
-        // is as wide as its items need, never as wide as the longest word an application chose.
         const double chrome = 2 * RibbonMetrics.GroupPadding;
 
         // The folded button draws exactly like a Large item, so its width comes out of the same
@@ -150,7 +148,7 @@ public partial class RibbonGroup : Control
         double iconOnly = RibbonMetrics.LargeIconSize + (2 * RibbonMetrics.ItemPadding) + chrome;
         double withLabel = Math.Max(RibbonMetrics.LargeIconSize, labelWidth) + (2 * RibbonMetrics.ItemPadding) + chrome;
 
-        return new RibbonGroupMetrics(Priority, chrome, withLabel, iconOnly, measured);
+        return new RibbonGroupMetrics(Priority, chrome, labelWidth, withLabel, iconOnly, measured);
     }
 
     // Applies what the layout decided: the shape of every item, and whether the group is folded.

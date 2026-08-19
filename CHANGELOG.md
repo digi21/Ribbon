@@ -19,6 +19,8 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   so a `NumberBox` needs no wrapper and keeps its focus.
 - `Ribbon.AllowedSizes`, attached, for declaring which shapes an item accepts, and `Ribbon.GetSize`
   for reading the one it was given.
+- A group is never narrower than its own name, as in Office, so the name under a group stays
+  readable however hard the ribbon is squeezed.
 - `RibbonItemSize` and `RibbonItemSizes`: the three shapes an item can take, and the set of them an
   item declares it accepts.
 - The layout that decides between those shapes, ahead of the control that will use it. Items step

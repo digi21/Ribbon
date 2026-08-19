@@ -9,6 +9,10 @@ public class RibbonGroupPackingTests
 {
     private const double Spacing = RibbonLayoutSolver.ColumnSpacing;
 
+    // The floor a group's own name puts under its width is a thing in its own right, tested below;
+    // everywhere else it is out of the way so that the packing is what is being measured.
+    private const double NoLabel = 0;
+
     [Fact]
     public void ThreeSmallItems_ShareOneColumn()
     {
@@ -55,7 +59,7 @@ public class RibbonGroupPackingTests
     [Fact]
     public void ChromeIsAddedOnceAndSpacingOnlyBetweenColumns()
     {
-        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, 0, 0, [Small(40), Small(40), Small(40)]);
+        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, NoLabel, 0, 0, [Small(40), Small(40), Small(40)]);
 
         Assert.Equal(18 + 40, RibbonLayoutSolver.Measure(group, RibbonItemSize.Small));
     }
@@ -63,9 +67,45 @@ public class RibbonGroupPackingTests
     [Fact]
     public void AGroupWithNoItems_IsJustItsChrome()
     {
-        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, 0, 0, []);
+        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, NoLabel, 0, 0, []);
 
         Assert.Equal(18, RibbonLayoutSolver.Measure(group, RibbonItemSize.Large));
+    }
+
+    [Fact]
+    public void AGroupIsNeverNarrowerThanItsOwnName()
+    {
+        // As in Office: the name under a group is always readable, so it is a floor under the
+        // group's width and not something drawn inside whatever width the items happened to need.
+        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, LabelWidth: 90, 0, 0, [Small(40), Small(40)]);
+
+        Assert.Equal(18 + 90, RibbonLayoutSolver.Measure(group, RibbonItemSize.Small));
+    }
+
+    [Fact]
+    public void AGroupWiderThanItsName_IsLeftAtItsOwnWidth()
+    {
+        var group = new RibbonGroupMetrics(0, ChromeWidth: 18, LabelWidth: 90, 0, 0, [Small(120), Small(40)]);
+
+        Assert.Equal(18 + 120, RibbonLayoutSolver.Measure(group, RibbonItemSize.Small));
+    }
+
+    [Fact]
+    public void TheNameFloorIsTheSameAtEveryShape_SoSqueezingStillNeverWidens()
+    {
+        var group = new RibbonGroupMetrics(0, 18, LabelWidth: 90, 0, 0,
+        [
+            Item(RibbonItemSizes.All, 40, 90, 72),
+            Item(RibbonItemSizes.All, 40, 88, 70),
+        ]);
+
+        double large = RibbonLayoutSolver.Measure(group, RibbonItemSize.Large);
+        double normal = RibbonLayoutSolver.Measure(group, RibbonItemSize.Normal);
+        double small = RibbonLayoutSolver.Measure(group, RibbonItemSize.Small);
+
+        Assert.True(normal <= large, $"Normal ({normal}) is wider than Large ({large})");
+        Assert.True(small <= normal, $"Small ({small}) is wider than Normal ({normal})");
+        Assert.Equal(18 + 90, small);
     }
 
     [Fact]
@@ -110,7 +150,7 @@ public class RibbonGroupPackingTests
     [Fact]
     public void NarrowingTheCap_NeverWidensTheGroup()
     {
-        var group = new RibbonGroupMetrics(0, 18, 0, 0,
+        var group = new RibbonGroupMetrics(0, 18, NoLabel, 0, 0,
         [
             Item(RibbonItemSizes.All, 40, 90, 72),
             Item(RibbonItemSizes.All, 40, 88, 70),
@@ -127,7 +167,7 @@ public class RibbonGroupPackingTests
     }
 
     private static double Measure(RibbonItemSize cap, params RibbonItemMetrics[] items) =>
-        RibbonLayoutSolver.Measure(new RibbonGroupMetrics(0, 0, 0, 0, items), cap);
+        RibbonLayoutSolver.Measure(new RibbonGroupMetrics(0, 0, NoLabel, 0, 0, items), cap);
 
     private static RibbonItemMetrics Item(RibbonItemSizes allowed, double small, double normal, double large) =>
         new(allowed, small, normal, large);

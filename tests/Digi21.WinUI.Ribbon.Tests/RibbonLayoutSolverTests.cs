@@ -23,6 +23,10 @@ public class RibbonLayoutSolverTests
     private const double CollapsedWidth = 70;
     private const double CollapsedIconWidth = 36;
 
+    // Out of the way, so that these tests measure the packing and the order of giving way rather
+    // than the floor a group's own name puts under its width. That floor is tested where it lives.
+    private const double NoLabel = 0;
+
     [Fact]
     public void WithRoomToSpare_EveryItemIsAtItsLargest()
     {
@@ -117,7 +121,7 @@ public class RibbonLayoutSolverTests
     {
         // Nothing is assumed about the numbers the control hands over. A button that gains no width
         // by dropping its label keeps the label, which is more use for the same room.
-        var group = new RibbonGroupMetrics(0, Chrome, CollapsedWidth, CollapsedIconWidth: CollapsedWidth,
+        var group = new RibbonGroupMetrics(0, Chrome, NoLabel, CollapsedWidth, CollapsedIconWidth: CollapsedWidth,
             [Button(), Button(), Button(), Button(), Button()]);
 
         RibbonLayout layout = RibbonLayoutSolver.Solve([group], 0);
@@ -142,7 +146,7 @@ public class RibbonLayoutSolverTests
         [
             Group(0),
             Group(10),
-            new RibbonGroupMetrics(20, Chrome, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]),
+            new RibbonGroupMetrics(20, Chrome, NoLabel, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]),
         ];
 
         // Asserted step by step rather than at the index the first name went: a property of every
@@ -274,7 +278,7 @@ public class RibbonLayoutSolverTests
     {
         // Two icons and a bit of chrome are narrower than a button carrying the group's name, so
         // folding this one would both widen the strip and hide two commands.
-        var group = new RibbonGroupMetrics(0, Chrome, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]);
+        var group = new RibbonGroupMetrics(0, Chrome, NoLabel, CollapsedWidth, CollapsedIconWidth, [Button(), Button()]);
 
         RibbonLayout layout = RibbonLayoutSolver.Solve([group], 0);
 
@@ -392,7 +396,7 @@ public class RibbonLayoutSolverTests
     }
 
     private static RibbonGroupMetrics Group(int priority) =>
-        new(priority, Chrome, CollapsedWidth, CollapsedIconWidth,
+        new(priority, Chrome, NoLabel, CollapsedWidth, CollapsedIconWidth,
             [Button(), Button(), Button(), Button(), Button()]);
 
     private static RibbonItemMetrics Button() => new(RibbonItemSizes.All, 32, 72, 56);
