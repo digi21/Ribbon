@@ -37,6 +37,11 @@ what the library is measured against:
 - **Any WinUI control in a group** — `NumberBox`, `ComboBox`, `ToggleSwitch`, a colour picker —
   without losing the focus and without the consumer setting anything.
 - **A launcher button per group**, off by default, that opens a flyout when switched on.
+- **Minimizing, as in Office**: double-click a tab, press the chevron or `Ctrl+F1` and only the tab
+  strip is left. Clicking a tab then opens the ribbon *over* the content rather than pushing it
+  down, and that overlay closes on a command, on a click outside and on `Esc` without minimizing or
+  restoring anything. `IsMinimized` is an ordinary two-way property, so an application can save it
+  with the rest of its settings and put it back on the next run.
 - **UI Automation that works**: `InvokePattern` on buttons, `TogglePattern` on two-state ones, and
   `AutomationProperties.Name` on everything, so the application on top can be driven by a test rather
   than by screen coordinates.
