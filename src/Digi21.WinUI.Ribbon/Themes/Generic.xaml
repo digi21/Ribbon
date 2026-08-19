@@ -196,15 +196,31 @@
                             <primitives:RibbonItemContent x:Name="PART_CollapsedContent" />
                         </Button>
 
-                        <!-- Not trimmed, and it never needs to be: the layout takes this text's
-                             width as a floor for the whole group, so the name of a group is always
+                        <!-- The name of the group, and beside it the launcher when the group has
+                             one. Not trimmed, and it never needs to be: the layout takes the width
+                             of both as a floor for the whole group, so the name of a group is always
                              readable however hard the ribbon is squeezed. -->
-                        <TextBlock
-                            x:Name="PART_Label"
+                        <StackPanel
                             Grid.Row="1"
                             HorizontalAlignment="Center"
-                            Style="{ThemeResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource RibbonGroupLabelForegroundBrush}" />
+                            Orientation="Horizontal">
+                            <TextBlock
+                                x:Name="PART_Label"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource RibbonGroupLabelForegroundBrush}" />
+                            <Button
+                                x:Name="PART_Launcher"
+                                Width="{ThemeResource RibbonLauncherSize}"
+                                Height="{ThemeResource RibbonLauncherSize}"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                CornerRadius="{ThemeResource RibbonItemCornerRadius}"
+                                Visibility="Collapsed">
+                                <FontIcon FontSize="10" Glyph="&#xE76C;" />
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

@@ -30,4 +30,7 @@ internal static class RibbonMetrics
     internal const double GroupLabelHeight = 16;
 
     internal const double SeparatorWidth = 9;
+
+    // The button in the corner of a group that opens the rest of what it does.
+    internal const double LauncherSize = 16;
 }
