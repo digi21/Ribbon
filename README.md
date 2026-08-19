@@ -67,6 +67,23 @@ what the library is measured against:
 dotnet add package Digi21.WinUI.Ribbon
 ```
 
+### Theming
+
+Every colour the ribbon paints with is an alias of a WinUI system brush, so it follows the accent
+colour, both themes and high contrast on its own. Redeclare a key to change one:
+
+```xml
+<SolidColorBrush x:Key="RibbonTabSelectionIndicatorBrush" Color="#C50F1F" />
+```
+
+One thing is yours rather than the library's: **the page behind it**. The ribbon paints with a layer
+brush, as WinUI's own surfaces do, and a layer brush is translucent by design — give the root of your
+window a `Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"`, or an unpackaged WinUI
+window will show through black and turn every word invisible in a light theme.
+
+[docs/theming.md](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) has the full list of
+keys, where an override has to go, how to retemplate a control, and what is deliberately not a key.
+
 ### Other languages
 
 The ribbon does not translate what you put in it: the name of a tab, of a group, of an item is yours
@@ -83,6 +100,16 @@ RibbonStrings.GroupLauncherNameFormat = "Opciones de {0}";
 [docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all four
 in Catalan, English, Basque, French, Galician, German, Italian, Portuguese and Spanish, each using
 the word Office uses in that language rather than a translation of the English one.
+
+## Documentation
+
+- [How the ribbon decides what fits](https://github.com/digi21/Ribbon/blob/main/docs/layout.md) —
+  the three shapes, the columns of three, the order groups give way in, and why a width can only ever
+  have one answer.
+- [Theming](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) — every brush and metric key,
+  and what is deliberately not one.
+- [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the four
+  sentences the ribbon says on its own account, in nine languages.
 
 ## Status
 
