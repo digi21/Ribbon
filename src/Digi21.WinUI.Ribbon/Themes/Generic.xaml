@@ -23,17 +23,51 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <StackPanel
-                            x:Name="PART_TabStrip"
-                            Orientation="Horizontal"
-                            Spacing="2" />
+                        <Grid x:Name="PART_Strip">
+                            <StackPanel
+                                x:Name="PART_TabStrip"
+                                Orientation="Horizontal"
+                                Spacing="2" />
+
+                            <Button
+                                x:Name="PART_Minimize"
+                                Width="32"
+                                Margin="4,0"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Stretch"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                CornerRadius="{ThemeResource RibbonItemCornerRadius}">
+                                <FontIcon x:Name="PART_MinimizeGlyph" FontSize="10" Glyph="&#xE70E;" />
+                            </Button>
+                        </Grid>
 
                         <Border
+                            x:Name="PART_BodyHost"
                             Grid.Row="1"
                             BorderBrush="{ThemeResource RibbonBorderBrush}"
                             BorderThickness="0,1,0,1">
                             <Grid x:Name="PART_Body" Padding="4" />
                         </Border>
+
+                        <!--
+                            Where the ribbon goes while it is minimised and somebody has clicked a
+                            tab. Light dismissal is what closes it on a click elsewhere and on Esc,
+                            which is two of the three ways out; invoking a command is the third and
+                            the ribbon closes it from code.
+
+                            The same body element moves in and out of here. It is the mechanism a
+                            group already uses to fold, for the same reason: what an application put
+                            in a group has to be the same object afterwards.
+                        -->
+                        <Popup x:Name="PART_Overlay" IsLightDismissEnabled="True">
+                            <Border
+                                x:Name="PART_OverlayHost"
+                                Background="{ThemeResource RibbonBackgroundBrush}"
+                                BorderBrush="{ThemeResource RibbonBorderBrush}"
+                                BorderThickness="0,1,0,1" />
+                        </Popup>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

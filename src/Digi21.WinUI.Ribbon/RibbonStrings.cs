@@ -30,6 +30,13 @@ public static class RibbonStrings
     /// </remarks>
     public static string GroupLauncherNameFormat { get; set; } = "{0} options";
 
+    /// <summary>Gets or sets what the chevron that puts the ribbon away announces itself as.</summary>
+    public static string MinimizeRibbonName { get; set; } = "Minimise the ribbon";
+
+    /// <summary>Gets or sets what the same chevron announces itself as once the ribbon is put away.</summary>
+    /// <remarks>Two sentences rather than one, because a button that does the opposite of what it says is a button nobody can use without looking.</remarks>
+    public static string ExpandRibbonName { get; set; } = "Expand the ribbon";
+
     /// <summary>Gets or sets what the button a folded group becomes announces itself as. Takes the group's name.</summary>
     /// <remarks>
     /// Worth saying that it is folded rather than only naming it: the commands it holds are one press

@@ -2,9 +2,13 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Digi21.WinUI.Ribbon.Primitives;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
 using Windows.Foundation;
+using Windows.System;
 
 namespace Digi21.WinUI.Ribbon;
 
@@ -49,14 +53,35 @@ public partial class Ribbon : Control
             typeof(Ribbon),
             new PropertyMetadata(RibbonItemSize.Normal));
 
+    /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
+    public static readonly DependencyProperty IsMinimizedProperty =
+        DependencyProperty.Register(
+            nameof(IsMinimized),
+            typeof(bool),
+            typeof(Ribbon),
+            new PropertyMetadata(false, OnIsMinimizedChanged));
+
     private const string TabStripPart = "PART_TabStrip";
     private const string BodyPart = "PART_Body";
+    private const string StripPart = "PART_Strip";
+    private const string BodyHostPart = "PART_BodyHost";
+    private const string MinimizePart = "PART_Minimize";
+    private const string MinimizeGlyphPart = "PART_MinimizeGlyph";
+    private const string OverlayPart = "PART_Overlay";
+    private const string OverlayHostPart = "PART_OverlayHost";
 
     private readonly ObservableCollection<RibbonTab> tabs = [];
     private readonly List<RibbonTabHeader> headers = [];
+    private readonly List<ButtonBase> invocations = [];
 
     private Panel? tabStrip;
     private Panel? body;
+    private FrameworkElement? strip;
+    private Border? bodyHost;
+    private Button? minimize;
+    private FontIcon? minimizeGlyph;
+    private Popup? overlay;
+    private Border? overlayHost;
 
     /// <summary>Initializes a new instance of the <see cref="Ribbon"/> class.</summary>
     public Ribbon()
@@ -64,6 +89,16 @@ public partial class Ribbon : Control
         RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(Ribbon);
         tabs.CollectionChanged += OnTabsChanged;
+
+        // Office's shortcut, and the one anybody who has used a ribbon will try.
+        var shortcut = new KeyboardAccelerator { Key = VirtualKey.F1, Modifiers = VirtualKeyModifiers.Control };
+        shortcut.Invoked += (_, arguments) =>
+        {
+            IsMinimized = !IsMinimized;
+            arguments.Handled = true;
+        };
+
+        KeyboardAccelerators.Add(shortcut);
     }
 
     /// <summary>Occurs when the tab on show changes.</summary>
@@ -77,6 +112,26 @@ public partial class Ribbon : Control
     {
         get => (int)GetValue(SelectedIndexProperty);
         set => SetValue(SelectedIndexProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the ribbon is put away, leaving only its tabs.</summary>
+    /// <remarks>
+    /// <para>
+    /// An ordinary two-way property so that an application can save it with the rest of its settings
+    /// and put it back on the next run. A user who puts the ribbon away and finds it open again
+    /// every morning will stop putting it away.
+    /// </para>
+    /// <para>
+    /// Clicking a tab while the ribbon is minimised opens it <em>over</em> the content rather than
+    /// pushing the content down, and that opening is transient: it goes away on a command, on a
+    /// click elsewhere and on Esc, and it does not change this property. What the user asked for was
+    /// to see a tab, not to bring the ribbon back.
+    /// </para>
+    /// </remarks>
+    public bool IsMinimized
+    {
+        get => (bool)GetValue(IsMinimizedProperty);
+        set => SetValue(IsMinimizedProperty, value);
     }
 
     /// <summary>Gets the tab on show, or <see langword="null"/> when there are no tabs.</summary>
@@ -126,8 +181,25 @@ public partial class Ribbon : Control
 
         tabStrip = GetTemplateChild(TabStripPart) as Panel;
         body = GetTemplateChild(BodyPart) as Panel;
+        strip = GetTemplateChild(StripPart) as FrameworkElement;
+        bodyHost = GetTemplateChild(BodyHostPart) as Border;
+        minimize = GetTemplateChild(MinimizePart) as Button;
+        minimizeGlyph = GetTemplateChild(MinimizeGlyphPart) as FontIcon;
+        overlay = GetTemplateChild(OverlayPart) as Popup;
+        overlayHost = GetTemplateChild(OverlayHostPart) as Border;
+
+        if (minimize is not null)
+        {
+            minimize.Click += (_, _) => IsMinimized = !IsMinimized;
+        }
+
+        if (overlay is not null)
+        {
+            overlay.Closed += OnOverlayClosed;
+        }
 
         Rebuild();
+        UpdateMinimizedState();
     }
 
     private static void OnAllowedSizesChanged(DependencyObject item, DependencyPropertyChangedEventArgs arguments)
@@ -168,7 +240,10 @@ public partial class Ribbon : Control
         foreach (RibbonTab tab in tabs)
         {
             var header = new RibbonTabHeader { Label = tab.Label, Tab = tab };
-            header.Click += OnHeaderClick;
+            // A click goes through the same door a driver does, rather than each having its own.
+            header.Click += (sender, _) => ((RibbonTabHeader)sender).Choose();
+            header.Chosen += OnHeaderChosen;
+            header.DoubleTapped += OnHeaderDoubleTapped;
 
             headers.Add(header);
             tabStrip.Children.Add(header);
@@ -190,11 +265,130 @@ public partial class Ribbon : Control
         ShowSelectedTab();
     }
 
-    private void OnHeaderClick(object sender, RoutedEventArgs arguments)
+    private static void OnIsMinimizedChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
     {
-        if (sender is RibbonTabHeader { Tab: { } tab })
+        ((Ribbon)ribbon).UpdateMinimizedState();
+    }
+
+    private void OnHeaderChosen(object? sender, EventArgs arguments)
+    {
+        if (sender is not RibbonTabHeader { Tab: { } tab })
         {
-            SelectedIndex = tabs.IndexOf(tab);
+            return;
+        }
+
+        bool already = ReferenceEquals(tab, SelectedTab);
+        SelectedIndex = tabs.IndexOf(tab);
+
+        if (!IsMinimized)
+        {
+            return;
+        }
+
+        // Clicking the tab that is already showing over the content puts it away again, which is the
+        // only gesture that would otherwise do nothing at all.
+        if (already && overlay is { IsOpen: true })
+        {
+            overlay.IsOpen = false;
+        }
+        else
+        {
+            ShowOverlay();
+        }
+    }
+
+    private void OnHeaderDoubleTapped(object sender, RoutedEventArgs arguments)
+    {
+        IsMinimized = !IsMinimized;
+    }
+
+    private void UpdateMinimizedState()
+    {
+        if (minimizeGlyph is not null)
+        {
+            // Pointing the way it will move: down to bring the ribbon back, up to put it away.
+            minimizeGlyph.Glyph = IsMinimized ? "" : "";
+        }
+
+        if (minimize is not null)
+        {
+            AutomationProperties.SetName(minimize, IsMinimized ? RibbonStrings.ExpandRibbonName : RibbonStrings.MinimizeRibbonName);
+            ToolTipService.SetToolTip(minimize, AutomationProperties.GetName(minimize));
+        }
+
+        if (overlay is { IsOpen: true })
+        {
+            overlay.IsOpen = false;
+        }
+
+        if (bodyHost is not null)
+        {
+            bodyHost.Visibility = IsMinimized ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
+
+    // Moves the body over the content. The same element, moved rather than rebuilt, for the reason
+    // every move in this library is a move: what an application put in a group has to be the same
+    // object afterwards.
+    private void ShowOverlay()
+    {
+        if (overlay is null || overlayHost is null || bodyHost is null || body is null)
+        {
+            return;
+        }
+
+        // Opened at the ribbon's own width, so that the layout decides with the number it would have
+        // had inline. There is one measuring path and this is not a second one.
+        overlayHost.Width = ActualWidth;
+
+        if (!ReferenceEquals(overlayHost.Child, body))
+        {
+            bodyHost.Child = null;
+            overlayHost.Child = body;
+        }
+
+        overlay.XamlRoot = XamlRoot;
+        overlay.VerticalOffset = strip?.ActualHeight ?? 0;
+        overlay.IsOpen = true;
+
+        // The third way out. Light dismissal covers a click elsewhere and Esc; a command invoked
+        // inside the ribbon is the one the popup cannot see.
+        foreach (RibbonGroup group in SelectedTab?.Groups ?? [])
+        {
+            foreach (UIElement item in group.Items)
+            {
+                if (item is ButtonBase button)
+                {
+                    button.Click += OnItemInvoked;
+                    invocations.Add(button);
+                }
+            }
+        }
+    }
+
+    private void OnItemInvoked(object sender, RoutedEventArgs arguments)
+    {
+        if (overlay is not null)
+        {
+            overlay.IsOpen = false;
+        }
+    }
+
+    private void OnOverlayClosed(object? sender, object arguments)
+    {
+        foreach (ButtonBase button in invocations)
+        {
+            button.Click -= OnItemInvoked;
+        }
+
+        invocations.Clear();
+
+        // Home again, and collapsed if the ribbon is still minimised. Left in the popup it would be
+        // a tab nobody can reach and a set of controls the application still holds references to.
+        if (overlayHost is not null && bodyHost is not null && body is not null && ReferenceEquals(overlayHost.Child, body))
+        {
+            overlayHost.Child = null;
+            bodyHost.Child = body;
         }
     }
 

@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 
@@ -14,10 +15,11 @@ namespace Digi21.WinUI.Ribbon.Primitives;
 /// so a window holding both looks like one window.
 /// </para>
 /// <para>
-/// A <see cref="ButtonBase"/> for now, so that it is invokable and reachable from the keyboard
-/// without any of that being written here. It should announce itself as one of a set of tabs rather
-/// than as a button, which is a <c>SelectionItemPattern</c> and an automation peer of its own; that
-/// is on the list for the keyboard work, not forgotten.
+/// A <see cref="ButtonBase"/>, so that pressing it and reaching it from the keyboard are WinUI's
+/// rather than written here. It announces itself as a tab rather than as a button, through
+/// <see cref="RibbonTabHeaderAutomationPeer"/> - which had to be written, because unlike
+/// <c>Button</c> a <see cref="ButtonBase"/> brings no peer of its own and every tab of the ribbon
+/// therefore answered to no pattern at all until the probe said so.
 /// </para>
 /// </remarks>
 public partial class RibbonTabHeader : ButtonBase
@@ -55,6 +57,19 @@ public partial class RibbonTabHeader : ButtonBase
     }
 
     internal RibbonTab? Tab { get; set; }
+
+    /// <summary>Occurs when this tab is chosen, by a click, by the keyboard or by an automated test.</summary>
+    internal event EventHandler? Chosen;
+
+    /// <summary>Chooses this tab, exactly as clicking it would.</summary>
+    /// <remarks>The one door in, so that a driver goes through the same code a finger does rather than through a shortcut nobody else takes.</remarks>
+    internal void Choose()
+    {
+        Chosen?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <inheritdoc/>
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonTabHeaderAutomationPeer(this);
 
     /// <inheritdoc/>
     protected override void OnApplyTemplate()

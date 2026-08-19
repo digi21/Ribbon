@@ -19,6 +19,16 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   so a `NumberBox` needs no wrapper and keeps its focus.
 - `Ribbon.AllowedSizes`, attached, for declaring which shapes an item accepts, and `Ribbon.GetSize`
   for reading the one it was given.
+- `RibbonGroup.HasLauncher`, `LauncherFlyout` and `LauncherClick`: the small button beside a group's
+  name that opens whatever the group has no room for. Off out of the box.
+- `Ribbon.IsMinimized`, with a chevron in the tab strip, a double-click on a tab and `Ctrl+F1`.
+  Minimised, the ribbon leaves only its tabs and gives the room back to the window; clicking a tab
+  then opens it *over* the content, transiently, without changing the property — so an application
+  saving `IsMinimized` records what the user asked for rather than what they last looked at.
+- `RibbonStrings`, the few sentences the ribbon says on its own account: what a group's launcher is
+  called, what the button a folded group becomes is called, and the two the chevron uses.
+- `RibbonTabHeaderAutomationPeer`, so that a tab announces itself as a tab and can be chosen by
+  something other than a click on a coordinate.
 - A group is never narrower than its own name, as in Office, so the name under a group stays
   readable however hard the ribbon is squeezed.
 - `RibbonItemSize` and `RibbonItemSizes`: the three shapes an item can take, and the set of them an
