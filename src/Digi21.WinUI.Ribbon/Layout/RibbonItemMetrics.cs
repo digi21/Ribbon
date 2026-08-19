@@ -13,13 +13,16 @@ internal readonly record struct RibbonItemMetrics(
     double SmallWidth,
     double NormalWidth,
     double LargeWidth,
-    bool IsSeparator = false)
+    bool IsSeparator = false,
+    int Rows = 1)
 {
     // A separator, and an item drawn Large, take the whole height of the group and therefore a
-    // column to themselves. Everything else takes one row, which is what makes six small buttons a
-    // grid rather than a run.
+    // column to themselves. Everything else takes the rows it needs - one for a button or a single
+    // control, more for something an application built out of several of them - which is what makes
+    // six small buttons a grid rather than a run, and a stack of three boxes a column rather than a
+    // ribbon three times too tall.
     internal int RowsAt(RibbonItemSize size, int maxRows) =>
-        IsSeparator || size == RibbonItemSize.Large ? maxRows : 1;
+        IsSeparator || size == RibbonItemSize.Large ? maxRows : Math.Clamp(Rows, 1, maxRows);
 
     internal double WidthAt(RibbonItemSize size) => size switch
     {

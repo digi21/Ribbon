@@ -44,25 +44,27 @@ public sealed partial class RibbonItemsPanel : Panel
         rows = new int[count];
         var widths = new double[count];
 
-        // A row is as tall as the tallest thing that has to sit in one, and what has to sit in one
-        // is whatever the application put there. The ribbon's own items are twenty-four pixels; a
-        // WinUI control is thirty-two, and one with a name beside it is thirty-three. Assuming the
-        // first number and arranging the third into it is how two hosted controls in one group end
-        // up drawn on top of each other - which is what the probe reported, to the pixel, before
-        // this was measured rather than assumed.
-        rowHeight = RibbonMetrics.RowHeight;
+        // A row is as tall as the tallest thing that has to sit in one, and an item taller than a row
+        // takes several rows rather than making every row that tall. Both halves are decided by
+        // RibbonRowFit, which is the same code the layout used to work out what would fit.
+        var heights = new double[count];
 
         for (int i = 0; i < count; i++)
         {
             UIElement child = Children[i];
             child.Measure(new Size(double.PositiveInfinity, ceiling));
-            rows[i] = RowsOf(child);
-            widths[i] = child.DesiredSize.Width;
 
-            if (rows[i] == 1)
-            {
-                rowHeight = Math.Max(rowHeight, child.DesiredSize.Height);
-            }
+            widths[i] = child.DesiredSize.Width;
+            heights[i] = child.DesiredSize.Height;
+        }
+
+        rowHeight = RibbonRowFit.RowHeight(heights);
+
+        for (int i = 0; i < count; i++)
+        {
+            rows[i] = Spans(Children[i])
+                ? RibbonMetrics.MaxRows
+                : RibbonRowFit.Rows(heights[i], rowHeight, RibbonMetrics.MaxRows);
         }
 
         double height = RibbonMetrics.MaxRows * rowHeight;
@@ -117,10 +119,7 @@ public sealed partial class RibbonItemsPanel : Panel
         return finalSize;
     }
 
-    // A separator, and an item drawn Large, take the whole height of the group and so a column of
-    // their own. Everything else takes one row.
-    private static int RowsOf(UIElement child) =>
-        child is RibbonSeparator || Ribbon.GetSize(child) == RibbonItemSize.Large
-            ? RibbonMetrics.MaxRows
-            : 1;
+    // A separator, and an item drawn Large, take the whole height of the group whatever they measure.
+    private static bool Spans(UIElement child) =>
+        child is RibbonSeparator || Ribbon.GetSize(child) == RibbonItemSize.Large;
 }

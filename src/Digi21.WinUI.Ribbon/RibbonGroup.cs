@@ -229,27 +229,46 @@ public partial class RibbonGroup : Control
     // many is a question for the probe's PERF run, not for a guess made here.
     private RibbonItemMetrics[] MeasureItems()
     {
-        var metrics = new RibbonItemMetrics[items.Count];
+        var widths = new (double Small, double Normal, double Large)[items.Count];
+        var heights = new double[items.Count];
 
         for (int i = 0; i < items.Count; i++)
         {
             UIElement item = items[i];
             RibbonItemSize restore = Ribbon.GetSize(item);
 
-            metrics[i] = new RibbonItemMetrics(
-                Ribbon.GetAllowedSizes(item),
-                WidthAt(item, RibbonItemSize.Small),
-                WidthAt(item, RibbonItemSize.Normal),
-                WidthAt(item, RibbonItemSize.Large),
-                item is RibbonSeparator);
+            widths[i].Small = MeasureAt(item, RibbonItemSize.Small);
+            widths[i].Normal = MeasureAt(item, RibbonItemSize.Normal);
+
+            // The height that decides how many rows it needs is the one it has on a row, which is
+            // the Normal one - a Large item spans the group whatever it measures.
+            heights[i] = item.DesiredSize.Height;
+
+            widths[i].Large = MeasureAt(item, RibbonItemSize.Large);
 
             Ribbon.SetSize(item, restore);
+        }
+
+        // The same rule the panel places by, so that what the layout decides and what the group draws
+        // cannot come apart.
+        double rowHeight = RibbonRowFit.RowHeight(heights);
+
+        var metrics = new RibbonItemMetrics[items.Count];
+        for (int i = 0; i < items.Count; i++)
+        {
+            metrics[i] = new RibbonItemMetrics(
+                Ribbon.GetAllowedSizes(items[i]),
+                widths[i].Small,
+                widths[i].Normal,
+                widths[i].Large,
+                items[i] is RibbonSeparator,
+                RibbonRowFit.Rows(heights[i], rowHeight, RibbonMetrics.MaxRows));
         }
 
         return metrics;
     }
 
-    private static double WidthAt(UIElement item, RibbonItemSize size)
+    private static double MeasureAt(UIElement item, RibbonItemSize size)
     {
         Ribbon.SetSize(item, size);
         item.InvalidateMeasure();
