@@ -24,11 +24,12 @@ public sealed partial class RibbonItemsPanel : Panel
     private int[] placement = [];
     private int[] rows = [];
     private double[] columnWidths = [];
+    private double rowHeight = RibbonMetrics.RowHeight;
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
-        double height = RibbonMetrics.MaxRows * RibbonMetrics.RowHeight;
+        double ceiling = RibbonMetrics.MaxRows * RibbonMetrics.RowHeight;
         int count = Children.Count;
 
         if (count == 0)
@@ -36,19 +37,35 @@ public sealed partial class RibbonItemsPanel : Panel
             placement = [];
             rows = [];
             columnWidths = [];
-            return new Size(0, height);
+            rowHeight = RibbonMetrics.RowHeight;
+            return new Size(0, ceiling);
         }
 
         rows = new int[count];
         var widths = new double[count];
 
+        // A row is as tall as the tallest thing that has to sit in one, and what has to sit in one
+        // is whatever the application put there. The ribbon's own items are twenty-four pixels; a
+        // WinUI control is thirty-two, and one with a name beside it is thirty-three. Assuming the
+        // first number and arranging the third into it is how two hosted controls in one group end
+        // up drawn on top of each other - which is what the probe reported, to the pixel, before
+        // this was measured rather than assumed.
+        rowHeight = RibbonMetrics.RowHeight;
+
         for (int i = 0; i < count; i++)
         {
             UIElement child = Children[i];
-            child.Measure(new Size(double.PositiveInfinity, height));
+            child.Measure(new Size(double.PositiveInfinity, ceiling));
             rows[i] = RowsOf(child);
             widths[i] = child.DesiredSize.Width;
+
+            if (rows[i] == 1)
+            {
+                rowHeight = Math.Max(rowHeight, child.DesiredSize.Height);
+            }
         }
+
+        double height = RibbonMetrics.MaxRows * rowHeight;
 
         placement = RibbonColumnPacker.Pack(rows, RibbonMetrics.MaxRows, out int columns);
 
@@ -85,13 +102,15 @@ public sealed partial class RibbonItemsPanel : Panel
 
         var used = new int[columnWidths.Length];
 
+        // Stretched to the height the strip settled on, so that the rows of every group line up
+        // however tall the tallest item of any one of them turned out to be.
+        double row = Math.Max(rowHeight, finalSize.Height / RibbonMetrics.MaxRows);
+
         for (int i = 0; i < Children.Count; i++)
         {
             int column = placement[i];
-            double top = used[column] * RibbonMetrics.RowHeight;
-            double itemHeight = rows[i] * RibbonMetrics.RowHeight;
 
-            Children[i].Arrange(new Rect(lefts[column], top, columnWidths[column], itemHeight));
+            Children[i].Arrange(new Rect(lefts[column], used[column] * row, columnWidths[column], rows[i] * row));
             used[column] += rows[i];
         }
 

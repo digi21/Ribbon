@@ -69,6 +69,7 @@ public partial class Ribbon : Control
     private const string MinimizeGlyphPart = "PART_MinimizeGlyph";
     private const string OverlayPart = "PART_Overlay";
     private const string OverlayHostPart = "PART_OverlayHost";
+    private const string ExpandPart = "PART_Expand";
 
     private readonly ObservableCollection<RibbonTab> tabs = [];
     private readonly List<RibbonTabHeader> headers = [];
@@ -79,6 +80,7 @@ public partial class Ribbon : Control
     private FrameworkElement? strip;
     private Border? bodyHost;
     private Button? minimize;
+    private Button? expand;
     private FontIcon? minimizeGlyph;
     private Popup? overlay;
     private Border? overlayHost;
@@ -191,6 +193,16 @@ public partial class Ribbon : Control
         if (minimize is not null)
         {
             minimize.Click += (_, _) => IsMinimized = !IsMinimized;
+        }
+
+        if (GetTemplateChild(ExpandPart) is Button found)
+        {
+            expand = found;
+
+            // Only ever one thing, so it needs no glyph swapping and no second sentence.
+            expand.Click += (_, _) => IsMinimized = false;
+            AutomationProperties.SetName(expand, RibbonStrings.ExpandRibbonName);
+            ToolTipService.SetToolTip(expand, RibbonStrings.ExpandRibbonName);
         }
 
         if (overlay is not null)
@@ -324,6 +336,15 @@ public partial class Ribbon : Control
         if (bodyHost is not null)
         {
             bodyHost.Visibility = IsMinimized ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        // The chevron that puts the ribbon away lives in the body and goes with it, so a ribbon that
+        // is away would otherwise offer no way back that anybody can see: the double-click on a tab
+        // and Ctrl+F1 are both things you have to already know. This is the one that can be found by
+        // looking.
+        if (expand is not null)
+        {
+            expand.Visibility = IsMinimized ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 

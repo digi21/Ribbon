@@ -22,6 +22,10 @@
             <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
             <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
 
+            <!-- Opaque on purpose: this one floats over the application's content, where a layer
+                 brush has nothing behind it and reads as a hole. -->
+            <StaticResource x:Key="RibbonOverlayBackgroundBrush" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+
             <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
             <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
             <StaticResource x:Key="RibbonTabPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
@@ -39,6 +43,10 @@
             <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
             <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
 
+            <!-- Opaque on purpose: this one floats over the application's content, where a layer
+                 brush has nothing behind it and reads as a hole. -->
+            <StaticResource x:Key="RibbonOverlayBackgroundBrush" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
+
             <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
             <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />
             <StaticResource x:Key="RibbonTabPressedBackgroundBrush" ResourceKey="SubtleFillColorTertiaryBrush" />
@@ -55,6 +63,10 @@
         <ResourceDictionary x:Key="HighContrast">
             <StaticResource x:Key="RibbonBackgroundBrush" ResourceKey="LayerFillColorDefaultBrush" />
             <StaticResource x:Key="RibbonBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+
+            <!-- Opaque on purpose: this one floats over the application's content, where a layer
+                 brush has nothing behind it and reads as a hole. -->
+            <StaticResource x:Key="RibbonOverlayBackgroundBrush" ResourceKey="SolidBackgroundFillColorTertiaryBrush" />
 
             <StaticResource x:Key="RibbonTabForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
             <StaticResource x:Key="RibbonTabPointerOverBackgroundBrush" ResourceKey="SubtleFillColorSecondaryBrush" />

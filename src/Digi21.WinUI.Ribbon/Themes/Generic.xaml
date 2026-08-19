@@ -29,17 +29,26 @@
                                 Orientation="Horizontal"
                                 Spacing="2" />
 
+                            <!--
+                                The way back, and the only one there is once the ribbon is put away:
+                                the chevron in the body goes with the body. Shown only while the
+                                ribbon is away, so that it means one thing and the one in the body
+                                means the other, rather than a single button doing the opposite of
+                                what it did a moment ago.
+                            -->
                             <Button
-                                x:Name="PART_Minimize"
-                                Width="32"
+                                x:Name="PART_Expand"
+                                Width="24"
+                                Height="24"
                                 Margin="4,0"
                                 HorizontalAlignment="Right"
-                                VerticalAlignment="Stretch"
+                                VerticalAlignment="Center"
                                 Padding="0"
                                 Background="Transparent"
                                 BorderThickness="0"
-                                CornerRadius="{ThemeResource RibbonItemCornerRadius}">
-                                <FontIcon x:Name="PART_MinimizeGlyph" FontSize="10" Glyph="&#xE70E;" />
+                                CornerRadius="{ThemeResource RibbonItemCornerRadius}"
+                                Visibility="Collapsed">
+                                <FontIcon FontSize="10" Glyph="&#xE70D;" />
                             </Button>
                         </Grid>
 
@@ -48,7 +57,41 @@
                             Grid.Row="1"
                             BorderBrush="{ThemeResource RibbonBorderBrush}"
                             BorderThickness="0,1,0,1">
-                            <Grid x:Name="PART_Body" Padding="4" />
+                            <!--
+                                The chevron lives here, in the body, and not up in the tab strip: at
+                                the bottom right, level with the names of the groups, which is where
+                                Office puts it and where a hand goes looking for it.
+
+                                It follows the body into the overlay, which is what makes putting the
+                                ribbon back possible from there. Minimised and with nothing open it
+                                is out of sight, as it is in Office; a double-click on a tab and
+                                Ctrl+F1 are the ways back from there.
+
+                                A column of its own rather than floating over the groups, so that the
+                                room it takes is room the layout was never offered - the groups are
+                                measured with what is left, by the Grid, without either of them
+                                having to know about the other.
+                            -->
+                            <Grid x:Name="PART_Body" Padding="4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Button
+                                    x:Name="PART_Minimize"
+                                    Grid.Column="1"
+                                    Width="24"
+                                    Height="24"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Bottom"
+                                    Padding="0"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    CornerRadius="{ThemeResource RibbonItemCornerRadius}">
+                                    <FontIcon x:Name="PART_MinimizeGlyph" FontSize="10" Glyph="&#xE70E;" />
+                                </Button>
+                            </Grid>
                         </Border>
 
                         <!--
@@ -62,9 +105,12 @@
                             in a group has to be the same object afterwards.
                         -->
                         <Popup x:Name="PART_Overlay" IsLightDismissEnabled="True">
+                            <!-- Its own background rather than the ribbon's, and an opaque one: the
+                                 ribbon's is a layer brush, which is meant to sit on the window and
+                                 has nothing behind it out here. -->
                             <Border
                                 x:Name="PART_OverlayHost"
-                                Background="{ThemeResource RibbonBackgroundBrush}"
+                                Background="{ThemeResource RibbonOverlayBackgroundBrush}"
                                 BorderBrush="{ThemeResource RibbonBorderBrush}"
                                 BorderThickness="0,1,0,1" />
                         </Popup>
@@ -210,7 +256,15 @@
                 <ControlTemplate TargetType="local:RibbonGroup">
                     <Grid Padding="6">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
+                            <!--
+                                Star and not Auto. Every group is arranged at the height of the
+                                tallest one, and with Auto each of them kept its own items row and
+                                hung its name directly under it - so a group holding a combo box put
+                                its name lower than the group beside it holding only buttons. Star
+                                gives the items whatever height the strip settled on and pins the
+                                names to the bottom, where they line up.
+                            -->
+                            <RowDefinition Height="*" />
                             <RowDefinition Height="16" />
                         </Grid.RowDefinitions>
 

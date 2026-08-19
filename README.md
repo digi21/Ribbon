@@ -35,7 +35,10 @@ what the library is measured against:
   the lowest priority collapses into a drop-down. Reversible, stable, and never flickering between
   two arrangements at the width where one turns into the other.
 - **Any WinUI control in a group** — `NumberBox`, `ComboBox`, `ToggleSwitch`, a colour picker —
-  without losing the focus and without the consumer setting anything.
+  without losing the focus and without the consumer setting anything. Wrap it in a
+  `RibbonContentItem` to put a name beside it, and the control takes that name for a screen reader
+  too; drop it in bare and give it an `AutomationProperties.Name` of your own, because there is then
+  no label to borrow one from.
 - **A launcher button per group**, off by default, that opens a flyout when switched on.
 - **Minimizing, as in Office**: double-click a tab, press the chevron or `Ctrl+F1` and only the tab
   strip is left. Clicking a tab then opens the ribbon *over* the content rather than pushing it
