@@ -417,15 +417,34 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="local:RibbonDropDownButton">
-                    <Border Background="{TemplateBinding Background}" CornerRadius="{ThemeResource RibbonItemCornerRadius}">
-                        <StackPanel Orientation="Horizontal">
-                            <primitives:RibbonItemContent x:Name="PART_Content" />
-                            <FontIcon
-                                Margin="0,0,4,0"
-                                VerticalAlignment="Center"
-                                FontSize="8"
-                                Glyph="&#xE70D;" />
-                        </StackPanel>
+                    <!-- The chevron is inside the content and not beside it, because where it goes
+                         depends on the shape and only the content knows the shape. -->
+                    <Border
+                        x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{ThemeResource RibbonItemCornerRadius}">
+                        <primitives:RibbonItemContent x:Name="PART_Content" ShowsChevron="True" />
+
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPointerOverBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.4" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

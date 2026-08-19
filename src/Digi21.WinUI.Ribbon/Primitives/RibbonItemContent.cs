@@ -34,8 +34,19 @@ public sealed partial class RibbonItemContent : Panel
     public static readonly DependencyProperty ItemSizeProperty =
         DependencyProperty.Register(nameof(ItemSize), typeof(RibbonItemSize), typeof(RibbonItemContent), new PropertyMetadata(RibbonItemSize.Normal, OnContentChanged));
 
+    /// <summary>Identifies the <see cref="ShowsChevron"/> dependency property.</summary>
+    public static readonly DependencyProperty ShowsChevronProperty =
+        DependencyProperty.Register(nameof(ShowsChevron), typeof(bool), typeof(RibbonItemContent), new PropertyMetadata(false, OnContentChanged));
+
     private readonly Viewbox iconBox = new() { Stretch = Stretch.Uniform };
     private readonly IconSourceElement icon = new();
+    private readonly FontIcon chevron = new()
+    {
+        FontSize = 8,
+        Glyph = "",
+        Visibility = Visibility.Collapsed,
+    };
+
     private readonly TextBlock label = new()
     {
         TextTrimming = TextTrimming.CharacterEllipsis,
@@ -49,6 +60,19 @@ public sealed partial class RibbonItemContent : Panel
         iconBox.Child = icon;
         Children.Add(iconBox);
         Children.Add(label);
+        Children.Add(chevron);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the item shows the mark of something that opens.</summary>
+    /// <remarks>
+    /// Here rather than in the item's template, because where it goes depends on the shape: beside
+    /// the label when there is one on the same line, and under it when the icon is above the text.
+    /// A template cannot know which of those it is looking at; this panel decides the shape.
+    /// </remarks>
+    public bool ShowsChevron
+    {
+        get => (bool)GetValue(ShowsChevronProperty);
+        set => SetValue(ShowsChevronProperty, value);
     }
 
     /// <summary>Gets or sets the text beside or below the icon.</summary>
@@ -88,20 +112,25 @@ public sealed partial class RibbonItemContent : Panel
         label.Visibility = showsLabel ? Visibility.Visible : Visibility.Collapsed;
         label.Measure(showsLabel ? new Size(double.PositiveInfinity, double.PositiveInfinity) : new Size(0, 0));
 
+        chevron.Visibility = ShowsChevron ? Visibility.Visible : Visibility.Collapsed;
+        chevron.Measure(ShowsChevron ? new Size(RibbonMetrics.ChevronSize, RibbonMetrics.ChevronSize) : new Size(0, 0));
+
         double iconWidth = IconSource is null ? 0 : side;
         double labelWidth = showsLabel ? label.DesiredSize.Width : 0;
+        double mark = ShowsChevron ? RibbonMetrics.ChevronSize : 0;
 
         return ItemSize switch
         {
+            // The mark goes under the text when the icon is above it, so it widens nothing.
             RibbonItemSize.Large => new Size(
                 Math.Max(iconWidth, labelWidth) + (2 * RibbonMetrics.ItemPadding),
                 RibbonMetrics.MaxRows * RibbonMetrics.RowHeight),
 
             RibbonItemSize.Normal => new Size(
-                iconWidth + (showsLabel && iconWidth > 0 ? RibbonMetrics.IconLabelGap : 0) + labelWidth + (2 * RibbonMetrics.ItemPadding),
+                iconWidth + (showsLabel && iconWidth > 0 ? RibbonMetrics.IconLabelGap : 0) + labelWidth + mark + (2 * RibbonMetrics.ItemPadding),
                 RibbonMetrics.RowHeight),
 
-            _ => new Size(iconWidth + (2 * RibbonMetrics.ItemPadding), RibbonMetrics.RowHeight),
+            _ => new Size(iconWidth + mark + (2 * RibbonMetrics.ItemPadding), RibbonMetrics.RowHeight),
         };
     }
 
@@ -112,6 +141,8 @@ public sealed partial class RibbonItemContent : Panel
         bool showsIcon = IconSource is not null;
         bool showsLabel = label.Visibility == Visibility.Visible;
 
+        double mark = ShowsChevron ? RibbonMetrics.ChevronSize : 0;
+
         if (ItemSize == RibbonItemSize.Large)
         {
             double iconTop = RibbonMetrics.ItemPadding;
@@ -120,10 +151,26 @@ public sealed partial class RibbonItemContent : Panel
                 iconBox.Arrange(new Rect((finalSize.Width - side) / 2, iconTop, side, side));
             }
 
+            double top = iconTop + (showsIcon ? side + RibbonMetrics.ItemPadding : 0);
+
             if (showsLabel)
             {
-                double top = iconTop + (showsIcon ? side + RibbonMetrics.ItemPadding : 0);
-                label.Arrange(new Rect(RibbonMetrics.ItemPadding, top, Math.Max(0, finalSize.Width - (2 * RibbonMetrics.ItemPadding)), finalSize.Height - top));
+                label.Arrange(new Rect(
+                    RibbonMetrics.ItemPadding,
+                    top,
+                    Math.Max(0, finalSize.Width - (2 * RibbonMetrics.ItemPadding)),
+                    label.DesiredSize.Height));
+            }
+
+            if (ShowsChevron)
+            {
+                // Under the name, centred: an item drawn with its icon above its text says that it
+                // opens by pointing downwards at the end of the reading, not off to one side.
+                chevron.Arrange(new Rect(
+                    (finalSize.Width - mark) / 2,
+                    top + (showsLabel ? label.DesiredSize.Height : 0),
+                    mark,
+                    mark));
             }
 
             return finalSize;
@@ -138,7 +185,14 @@ public sealed partial class RibbonItemContent : Panel
 
         if (showsLabel)
         {
-            label.Arrange(new Rect(x, 0, Math.Max(0, finalSize.Width - x - RibbonMetrics.ItemPadding), finalSize.Height));
+            double room = Math.Max(0, finalSize.Width - x - mark - RibbonMetrics.ItemPadding);
+            label.Arrange(new Rect(x, 0, room, finalSize.Height));
+            x += room;
+        }
+
+        if (ShowsChevron)
+        {
+            chevron.Arrange(new Rect(x, (finalSize.Height - mark) / 2, mark, mark));
         }
 
         return finalSize;

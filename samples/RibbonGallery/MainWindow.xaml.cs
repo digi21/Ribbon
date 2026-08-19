@@ -31,6 +31,18 @@ public sealed partial class MainWindow : Window
         ShowMinimizedState();
     }
 
+    // Used by the screenshot run, which drives the selector rather than the root so that the picture
+    // does not show a window in one theme with a box beside it saying another.
+    internal void SetThemeForPicture(ElementTheme theme)
+    {
+        Theme.SelectedIndex = theme switch
+        {
+            ElementTheme.Light => 1,
+            ElementTheme.Dark => 2,
+            _ => 0,
+        };
+    }
+
     private void ShowMinimizedState()
     {
         MinimizeButton.Content = Ribbon.IsMinimized ? "Bring the ribbon back" : "Put the ribbon away";

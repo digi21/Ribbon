@@ -10,6 +10,11 @@ way gracefully as the window narrows: items step down through the size variants 
 group that no longer fits collapses into a button with a drop-down that holds it whole. Nothing ever
 scrolls out of reach, and nothing is ever built twice.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/digi21/Ribbon/main/assets/gallery-dark.png" />
+  <img src="https://raw.githubusercontent.com/digi21/Ribbon/main/assets/gallery.png" width="820" alt="The gallery: a Home tab with Clipboard, Font and Paragraph groups, items at three sizes, a hosted number box and combo box, and the chevron that puts the ribbon away" />
+</picture>
+
 ## Why this exists
 
 The first application to use it had a ribbon already, and replaced it for three reasons. They are
@@ -110,6 +115,9 @@ the word Office uses in that language rather than a translation of the English o
   and what is deliberately not one.
 - [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the four
   sentences the ribbon says on its own account, in nine languages.
+- [What WinUI cost this library](https://github.com/digi21/Ribbon/blob/main/docs/winui.md) — the
+  things that are not guessable, fail quietly, and each cost an afternoon. Worth reading before
+  concluding that something is impossible.
 
 ## Status
 

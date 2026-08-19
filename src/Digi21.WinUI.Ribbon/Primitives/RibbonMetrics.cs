@@ -31,6 +31,9 @@ internal static class RibbonMetrics
 
     internal const double SeparatorWidth = 9;
 
+    // The mark on an item that opens something.
+    internal const double ChevronSize = 12;
+
     // The button in the corner of a group that opens the rest of what it does.
     internal const double LauncherSize = 16;
 }

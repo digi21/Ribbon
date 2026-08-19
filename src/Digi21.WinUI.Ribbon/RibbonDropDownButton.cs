@@ -26,6 +26,17 @@ public partial class RibbonDropDownButton : DropDownButton, IRibbonItem
     {
         RibbonThemeResources.Ensure();
         DefaultStyleKey = typeof(RibbonDropDownButton);
+
+        // Without this the control gets no template at all, and a control with no template measures
+        // nothing and is arranged into a column of zero width: present according to every count, and
+        // invisible.
+        //
+        // DropDownButton is one of WinUI's own newer controls, and those look their default style up
+        // in the dictionary DefaultStyleResourceUri names rather than in the application's resources.
+        // Inherited unchanged, that points at WinUI's dictionary, where a type of ours does not
+        // exist. Button and ToggleButton are older and resolve the classic way, which is why the
+        // other items work without this line and this one did not.
+        DefaultStyleResourceUri = new Uri("ms-appx:///Digi21.WinUI.Ribbon/Themes/Generic.xaml");
         chrome = new RibbonItemChrome(this, () => Label, () => IconSource);
         Ribbon.SetAllowedSizes(this, RibbonItemSizes.All);
     }
