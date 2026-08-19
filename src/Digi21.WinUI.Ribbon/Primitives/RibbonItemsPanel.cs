@@ -29,7 +29,6 @@ public sealed partial class RibbonItemsPanel : Panel
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
-        double ceiling = RibbonMetrics.MaxRows * RibbonMetrics.RowHeight;
         int count = Children.Count;
 
         if (count == 0)
@@ -38,21 +37,30 @@ public sealed partial class RibbonItemsPanel : Panel
             rows = [];
             columnWidths = [];
             rowHeight = RibbonMetrics.RowHeight;
-            return new Size(0, ceiling);
+            return new Size(0, RibbonMetrics.MaxRows * RibbonMetrics.RowHeight);
         }
 
         rows = new int[count];
         var widths = new double[count];
 
-        // A row is as tall as the tallest thing that has to sit in one, and an item taller than a row
-        // takes several rows rather than making every row that tall. Both halves are decided by
-        // RibbonRowFit, which is the same code the layout used to work out what would fit.
+        // A row is as tall as the tallest thing that has to sit in one; an item taller than a row
+        // takes several rows rather than making every row that tall; and the rows it takes are
+        // between them as tall as it is, so that nothing is drawn shorter than it asked to be. All
+        // three are decided by RibbonRowFit, which is the same code the layout used to work out what
+        // would fit.
         var heights = new double[count];
 
         for (int i = 0; i < count; i++)
         {
             UIElement child = Children[i];
-            child.Measure(new Size(double.PositiveInfinity, ceiling));
+
+            // Measured against no ceiling at all, in height as well as in width. Offering the three
+            // rows the group has would have a taller item report exactly those three rows back -
+            // WinUI never says an element wants more than it was offered - and the group would then
+            // be built to the height of the answer rather than the height of the item, which is how
+            // a stack of three combo boxes came to be drawn in seventy-two pixels with its first and
+            // last box cut. What the rows are worth is settled below, once the true heights are in.
+            child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 
             widths[i] = child.DesiredSize.Width;
             heights[i] = child.DesiredSize.Height;

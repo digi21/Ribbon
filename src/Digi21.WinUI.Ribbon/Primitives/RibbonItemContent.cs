@@ -145,7 +145,16 @@ public sealed partial class RibbonItemContent : Panel
 
         if (ItemSize == RibbonItemSize.Large)
         {
-            double iconTop = RibbonMetrics.ItemPadding;
+            // Centred down the column rather than started at the top of it. An item drawn Large takes
+            // the whole height of the group whatever it measures, and a group holding a stack of
+            // controls beside its buttons is taller than three rows of the ribbon's own - which used
+            // to leave a Large button's icon and name pressed against the top of a highlight running
+            // forty pixels past the bottom of them.
+            double content = (showsIcon ? side + RibbonMetrics.ItemPadding : 0)
+                + (showsLabel ? label.DesiredSize.Height : 0)
+                + (ShowsChevron ? mark : 0);
+
+            double iconTop = Math.Max(RibbonMetrics.ItemPadding, (finalSize.Height - content) / 2);
             if (showsIcon)
             {
                 iconBox.Arrange(new Rect((finalSize.Width - side) / 2, iconTop, side, side));

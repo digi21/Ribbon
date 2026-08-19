@@ -31,6 +31,12 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   something other than a click on a coordinate.
 - A group is never narrower than its own name, as in Office, so the name under a group stays
   readable however hard the ribbon is squeezed.
+- A row is as tall as the tallest item that sits in one - a standard control, or one with a name
+  beside it - and anything taller spans as many rows as it needs of the three a group has, with
+  those rows tall enough between them to hold it. A `ToggleSwitch` is therefore two rows rather than
+  a tab of forty-pixel rows, and a stack of three labelled controls handed over as a single element
+  is a column three rows deep: the ribbon is the height of the stack, once, not three times, and not
+  two thirds of it with the first and last control cut off.
 - `RibbonItemSize` and `RibbonItemSizes`: the three shapes an item can take, and the set of them an
   item declares it accepts.
 - The layout that decides between those shapes, ahead of the control that will use it. Items step

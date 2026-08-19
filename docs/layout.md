@@ -37,6 +37,24 @@ of three widens all three.
 A group is never narrower than its own name, and the name is the whole of the floor — with the
 launcher beside it when the group has one.
 
+## How tall a row is
+
+A row is as tall as the tallest item that sits in one, and never shorter than the ribbon's own
+twenty-four pixels: a group holding a combo box has taller rows than one holding only buttons, and
+every group on the strip is then drawn at the height of the tallest of them, so that their names line
+up along the bottom.
+
+An item taller than a row — anything above thirty-six pixels, which is just above a standard control
+with a label beside it — is not a tall row but several rows. It spans as many as it needs, up to the
+three a group has, and those rows are between them as tall as the item is. So a `ToggleSwitch`, forty
+pixels tall, takes two ordinary rows rather than making every row of every group in the tab forty;
+and a stack of three labelled combo boxes handed over as one element takes the three rows of a column
+and makes the ribbon as tall as the stack — once, not three times, and not two thirds of it with the
+first and last box cut off.
+
+Nothing scrolls and nothing is hidden vertically: an item four hundred pixels tall makes a ribbon
+four hundred pixels tall. The height of a ribbon is what its groups put in it.
+
 ## Giving way
 
 Each group has a **cap** — `Large`, `Normal` or `Small` — and each of its items takes the largest

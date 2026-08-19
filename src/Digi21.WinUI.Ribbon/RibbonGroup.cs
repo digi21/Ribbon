@@ -272,7 +272,10 @@ public partial class RibbonGroup : Control
     {
         Ribbon.SetSize(item, size);
         item.InvalidateMeasure();
-        item.Measure(new Size(double.PositiveInfinity, RibbonMetrics.MaxRows * RibbonMetrics.RowHeight));
+        // No ceiling, for the reason the panel gives: an item measured against the group's three rows
+        // never asks for more than those three rows, and the height read back here is the one the
+        // rows have to be tall enough to hold.
+        item.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
 
         return item.DesiredSize.Width;
     }
