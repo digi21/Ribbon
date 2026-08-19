@@ -20,7 +20,8 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 - `Ribbon.AllowedSizes`, attached, for declaring which shapes an item accepts, and `Ribbon.GetSize`
   for reading the one it was given.
 - `RibbonGroup.HasLauncher`, `LauncherFlyout` and `LauncherClick`: the small button beside a group's
-  name that opens whatever the group has no room for. Off out of the box.
+  name that opens whatever the group has no room for. Off out of the box, and it goes with the name
+  when the group folds - a folded group draws its button and nothing else.
 - `Ribbon.IsMinimized`, with a chevron in the tab strip, a double-click on a tab and `Ctrl+F1`.
   Minimised, the ribbon leaves only its tabs and gives the room back to the window; clicking a tab
   then opens it *over* the content, transiently, without changing the property — so an application

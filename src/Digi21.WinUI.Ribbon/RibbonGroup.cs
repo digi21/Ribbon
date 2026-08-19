@@ -331,6 +331,15 @@ public partial class RibbonGroup : Control
             labelText.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
         }
 
+        // The launcher goes with the name it stands beside. It sits in the same panel, which is
+        // drawn over the button the group has become, so a group that folded with its launcher on
+        // wore it on top of its own button - a second thing to press, opening the dialog of a group
+        // whose commands are all behind the flyout underneath it.
+        if (launcher is not null)
+        {
+            launcher.Visibility = !collapsed && HasLauncher ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         if (collapsed && !ReferenceEquals(flyoutHost.Child, itemsPanel))
         {
             itemsHost.Child = null;
@@ -406,7 +415,7 @@ public partial class RibbonGroup : Control
 
         if (launcher is not null)
         {
-            launcher.Visibility = HasLauncher ? Visibility.Visible : Visibility.Collapsed;
+            launcher.Visibility = HasLauncher && !IsCollapsed ? Visibility.Visible : Visibility.Collapsed;
             launcher.Flyout = LauncherFlyout;
 
             // Every launcher looks the same and does something different, so the group's name is the
