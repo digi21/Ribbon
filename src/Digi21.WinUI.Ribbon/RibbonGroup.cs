@@ -97,6 +97,12 @@ public partial class RibbonGroup : Control
     // Written by the tab, which is told by the ribbon.
     private int rows = RibbonMetrics.MaxRows;
 
+    // How tall a row of this group has to be, from the last time its items were measured. Kept
+    // because the ribbon asks every tab how tall it needs to be - including the tabs that are not
+    // showing, which cannot be measured at all: a collapsed element measures as nothing however
+    // directly it is asked.
+    private double rowHeight = RibbonMetrics.RowHeight;
+
     // Whether the items, as they measured, hold something that cannot be drawn in a single row.
     // Cached alongside them and for the same reason: a folded group's items are in a closed flyout
     // and measure as nothing, so a group asked afresh would say it fits a row and unfold into one.
@@ -226,6 +232,33 @@ public partial class RibbonGroup : Control
         Fold(IsCollapsed, showsCollapsedLabel);
     }
 
+    // How tall this group needs to be, whatever the width and whether or not it is on show.
+    //
+    // Not what it currently measures: what it needs. A group that has folded draws a button and
+    // needs less, and a group in a tab nobody has chosen yet measures nothing at all, and neither is
+    // a reason for the ribbon to be a different height. It is the rows it has at the height its
+    // items need them, with its name and its padding on top.
+    internal double RequiredHeight
+    {
+        get
+        {
+            ApplyTemplate();
+            measured ??= MeasureItems();
+
+            // A group that cannot be drawn in the rows there are is drawn as its button at every
+            // width, and a button is one row whatever the group holds. Asking what its items need
+            // would have a stack of three combo boxes decide the height of a ribbon that is not
+            // going to draw them: it is the flyout that draws them, and a flyout costs no strip.
+            double needed = needsRoom && rows == 1
+                ? RibbonMetrics.RowHeight
+                : rows * rowHeight;
+
+            return needed
+                + (ShowsName ? RibbonMetrics.GroupLabelHeight : 0)
+                + (2 * RibbonMetrics.GroupPadding);
+        }
+    }
+
     // Everything the layout needs to know about this group, measured now.
     internal RibbonGroupMetrics CollectMetrics()
     {
@@ -324,8 +357,8 @@ public partial class RibbonGroup : Control
         }
 
         // The same rule the panel places by, so that what the layout decides and what the group draws
-        // cannot come apart.
-        double rowHeight = RibbonRowFit.RowHeight(heights, rows);
+        // cannot come apart. Kept, because the ribbon reads it back to give every tab one height.
+        rowHeight = RibbonRowFit.RowHeight(heights, rows);
 
         var metrics = new RibbonItemMetrics[items.Count];
         needsRoom = false;

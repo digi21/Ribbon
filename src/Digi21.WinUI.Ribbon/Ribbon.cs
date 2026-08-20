@@ -235,6 +235,16 @@ public partial class Ribbon : Control
     }
 
     /// <inheritdoc/>
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        // Before the template is measured, so that the tab on show is measured with the height the
+        // whole ribbon has already settled on rather than with its own.
+        LevelTabs();
+
+        return base.MeasureOverride(availableSize);
+    }
+
+    /// <inheritdoc/>
     protected override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
@@ -412,6 +422,35 @@ public partial class Ribbon : Control
 
             default:
                 break;
+        }
+    }
+
+    // One height for the whole ribbon, and every tab laid out at it.
+    //
+    // A ribbon is a strip with the whole window under it, so a strip that is four pixels taller for
+    // one tab than for another moves everything below it when a tab is chosen - and thirty pixels
+    // taller when one tab holds a stack of controls and another holds buttons. Every tab is asked
+    // what it needs, including the ones not showing, and every tab is given the largest answer.
+    //
+    // Asked rather than measured, because a tab that is not showing is collapsed and a collapsed
+    // element measures as nothing however directly it is asked. What a group needs is arithmetic
+    // over the heights of its items, and those it can measure whether it is on show or not.
+    //
+    // What a group needs is also read with every group open, so the height does not move when a
+    // group folds either: a ribbon that changed height as the window narrowed would be the same
+    // fault wearing a different hat.
+    private void LevelTabs()
+    {
+        double height = 0;
+
+        foreach (RibbonTab tab in tabs)
+        {
+            height = Math.Max(height, tab.RequiredHeight);
+        }
+
+        foreach (RibbonTab tab in tabs)
+        {
+            tab.MinHeight = height;
         }
     }
 

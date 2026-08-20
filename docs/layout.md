@@ -55,6 +55,17 @@ first and last box cut off.
 Nothing scrolls and nothing is hidden vertically: an item four hundred pixels tall makes a ribbon
 four hundred pixels tall. The height of a ribbon is what its groups put in it.
 
+**One height, for the whole ribbon.** The tab that needs the most decides it, and every tab is laid
+out at it — including the tabs nobody has opened yet, which are asked what they need rather than
+measured, because an element that is not on show measures as nothing however directly it is asked.
+The width does not come into it either: what a group needs is read with every group open, so folding
+one as the window narrows does not shorten the strip.
+
+That is not a detail of the drawing. A ribbon is a strip with the whole of an application's window
+under it, so a strip four pixels taller for one tab than for another moves everything below it every
+time a tab is chosen — and thirty pixels taller when one tab holds a stack of controls and another
+holds buttons.
+
 ## One row
 
 `DisplayMode="Simplified"` is Office's simplified ribbon: the whole strip in a single row.

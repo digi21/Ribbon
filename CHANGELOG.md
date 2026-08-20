@@ -55,6 +55,12 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   a tab of forty-pixel rows, and a stack of three labelled controls handed over as a single element
   is a column three rows deep: the ribbon is the height of the stack, once, not three times, and not
   two thirds of it with the first and last control cut off.
+- One height for the whole ribbon: the tab that needs the most decides it and every tab is laid out
+  at it, whatever width the window is. A ribbon is a strip with the whole window under it, and one
+  that is taller for the tab holding a stack of controls than for the tab holding buttons moves
+  everything below it each time a tab is chosen. The tabs that are not showing are asked what they
+  need rather than measured, because a collapsed element measures as nothing however directly it is
+  asked.
 - A group applies its template before the layout reads anything off it, so that the first pass is as
   good as any later one. A control WinUI has never measured has no template - no name to put a floor
   under its group's width, and no parts to fold with - and a window that opens at the width it stays

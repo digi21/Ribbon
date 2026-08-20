@@ -60,6 +60,24 @@ public partial class RibbonTab : Control
         }
     }
 
+    // How tall this tab needs to be: the group that needs the most. Asked of every tab by the ribbon,
+    // whether or not it is the one showing, so that choosing a tab never changes the height of the
+    // strip an application has put its whole window under.
+    internal double RequiredHeight
+    {
+        get
+        {
+            double height = 0;
+
+            foreach (RibbonGroup group in groups)
+            {
+                height = Math.Max(height, group.RequiredHeight);
+            }
+
+            return height;
+        }
+    }
+
     /// <inheritdoc/>
     protected override void OnApplyTemplate()
     {
