@@ -11,6 +11,31 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 
 ### Added
 
+- The keyboard. The whole ribbon is one stop on the way through the window - `Tab` reaches it at the
+  header of the tab on show, whichever way round it was going, and the next `Tab` leaves it - and
+  everything inside it is reached with the arrow keys, which is the shape of every WinUI control that
+  holds a strip of anything. Left and right move along the tabs and change the ribbon as they go,
+  wrapping round the ends and stepping over contextual tabs that are switched off; `Home` and `End`
+  go to either end of the strip; down goes into the commands, opening the tab over the content first
+  when the ribbon is minimised; and the arrows between commands are XY focus navigation, which reads
+  the geometry the layout has just settled on rather than a list this control would have to keep in
+  step - so an item that has stepped down to its icon, a group that has folded into a button and a
+  hosted control two rows tall are all just rectangles, and the nearest one that way is the answer.
+  `Esc` comes back out: to the strip from a command, and out of the ribbon from the strip, back to
+  whatever the focus came in from. It is also the only way out of a hosted control, because a
+  `NumberBox` takes the arrow keys for its caret and its value and is right to - which makes it a
+  trap no arrow key can leave. Office walks every command with `Tab` instead, and can, because you
+  enter an Office ribbon deliberately with `F6` or `Alt`; a control that has to sit in somebody
+  else's window cannot assume either, and forty tab stops between the address bar and the page is a
+  ribbon nobody tabs past twice.
+- The focus, drawn. These templates are the library's own, and a template that does not ask for the
+  system focus visual does not get one: every place an arrow key puts somebody was moving a focus
+  nobody could see, which is not navigation but guessing.
+- A tab that a minimised ribbon opened over the content puts the focus back on the strip as it
+  closes, rather than letting it fall wherever the window keeps its first button. The popup carrying
+  the tab drops the focus on its way out and there is nothing to put back afterwards - by the time it
+  says it has closed, the focus is already nowhere - so every way this control closes that tab now
+  moves the focus out of it first.
 - `Ribbon.TabTransition`: the change from one tab to the next is drawn rather than cut. The tab
   arriving fades in from the side the user moved towards, over 160 ms, because a tab is a whole strip
   of commands replaced at once and replacing it between two frames leaves the eye to work out on its

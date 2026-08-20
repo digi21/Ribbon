@@ -156,6 +156,10 @@ public partial class Ribbon : Control
         };
 
         KeyboardAccelerators.Add(shortcut);
+
+        // The rest of the keyboard, which is about the focus rather than about one shortcut: where
+        // Tab comes in, what the arrows do once it is in, and where Esc sends it back to.
+        ConfigureKeyboard();
     }
 
     /// <summary>Occurs when the tab on show changes.</summary>
@@ -391,6 +395,11 @@ public partial class Ribbon : Control
 
         if (body is Panel host)
         {
+            // Esc, listened for on the body rather than on the ribbon: a minimised ribbon keeps the
+            // body in a popup, and a key pressed in there routes up as far as the body and no
+            // further.
+            host.KeyDown += OnBodyKeyDown;
+
             // A tab arriving comes from beside its place, and beside its place is outside the ribbon:
             // without this, the first frames of it are drawn past the ribbon's own edge and over
             // whatever the window has put there. Kept up to date rather than set once, because the
@@ -552,7 +561,7 @@ public partial class Ribbon : Control
         // only gesture that would otherwise do nothing at all.
         if (already && overlay is { IsOpen: true })
         {
-            overlay.IsOpen = false;
+            CloseOverlay();
         }
         else
         {
@@ -661,10 +670,7 @@ public partial class Ribbon : Control
     {
         UpdateChevron();
 
-        if (overlay is { IsOpen: true })
-        {
-            overlay.IsOpen = false;
-        }
+        CloseOverlay();
 
         if (bodyHost is not null)
         {
@@ -722,10 +728,7 @@ public partial class Ribbon : Control
 
     private void OnItemInvoked(object sender, RoutedEventArgs arguments)
     {
-        if (overlay is not null)
-        {
-            overlay.IsOpen = false;
-        }
+        CloseOverlay();
     }
 
     private void OnOverlayClosed(object? sender, object arguments)
@@ -778,7 +781,7 @@ public partial class Ribbon : Control
             // gone. It closes with it rather than swapping in a tab nobody asked to see.
             if (wasShowing && overlay is { IsOpen: true })
             {
-                overlay.IsOpen = false;
+                CloseOverlay();
             }
 
             Select(wasShowing
@@ -901,10 +904,10 @@ public partial class Ribbon : Control
             tab.Visibility = ReferenceEquals(tab, selected) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        foreach (RibbonTabHeader header in headers)
-        {
-            header.IsSelected = ReferenceEquals(header.Tab, selected);
-        }
+        // Which header wears the mark of the tab on show, and which one the keyboard stands on -
+        // one question, because the answer is the same header and the strip has only ever one of
+        // each. It also carries the focus across when the strip is where the focus already was.
+        MarkHeaders(selected);
 
         // Last, and after the visibilities on purpose: what is drawn moving is a tab that is already
         // there, already laid out and already answering to a click. Nothing waits for it.

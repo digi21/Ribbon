@@ -133,6 +133,13 @@
     </Style>
 
     <Style TargetType="primitives:RibbonTabHeader">
+        <!--
+            The focus, drawn. These templates belong to this library rather than to WinUI, and a
+            template that does not ask for the system focus visual does not get one - which is how
+            a ribbon ends up with arrow keys that move a focus nobody can see. Every style here
+            that a key can land on asks for it.
+        -->
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Padding" Value="{ThemeResource RibbonTabPadding}" />
         <Setter Property="Foreground" Value="{ThemeResource RibbonTabForegroundBrush}" />
         <Setter Property="Template">
@@ -349,6 +356,7 @@
     </Style>
 
     <Style TargetType="local:RibbonButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
@@ -388,6 +396,7 @@
     </Style>
 
     <Style TargetType="local:RibbonToggleButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
@@ -444,6 +453,7 @@
     </Style>
 
     <Style TargetType="local:RibbonDropDownButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />

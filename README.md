@@ -84,7 +84,16 @@ what the library is measured against:
   `TabTransition="Fade"` takes the movement off and `"None"` takes the whole thing off. Whatever it
   says, a system told to show no animations is obeyed, and a minimised ribbon opening a tab over the
   content cuts: the popup that carries it already arrives with an animation of its own.
-- **Keyboard**: Tab and the arrow keys move between tabs and items, Esc closes a drop-down.
+- **Keyboard**: the whole ribbon is one stop on the way through the window. `Tab` reaches it at the
+  tab on show, whichever way round it was going, and the next `Tab` leaves it - a ribbon that made
+  every command a tab stop would be one nobody tabs past twice. Everything inside is reached with the
+  arrow keys, as it is in every WinUI control that holds a strip of anything: left and right along
+  the tabs, changing the ribbon as they go, `Home` and `End` to either end of the strip, down into
+  the commands and then the arrows between them - across groups, into the button a folded group
+  became, and up out of the top row back to the tab names. `Esc` comes back out: to the strip from a
+  command, which is also the way out of a hosted `NumberBox` that has taken the arrow keys for its
+  caret, and out of the ribbon from the strip, back to whatever the focus came in from.
+  [docs/keyboard.md](https://github.com/digi21/Ribbon/blob/main/docs/keyboard.md) is the table.
 - **Correct at 100 %, 125 %, 150 % and 200 %.**
 - **The consumer supplies the text, already translated.** The library does not translate ribbon
   content; only its own internal strings, which ship in nine languages.
@@ -144,6 +153,9 @@ the word Office uses in that language rather than a translation of the English o
 - [Contextual tabs](https://github.com/digi21/Ribbon/blob/main/docs/contextual-tabs.md) — a tab that
   comes and goes: the three properties, where it appears, where the ribbon goes when it leaves, and
   what it does to the height, to a simplified ribbon and to a minimised one.
+- [The keyboard](https://github.com/digi21/Ribbon/blob/main/docs/keyboard.md) — one stop for the
+  whole ribbon and the arrow keys inside it: every key in a table, why `Tab` does not walk the
+  commands, and how to get out of a control that has taken the arrows for itself.
 - [Theming](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) — every brush and metric key,
   and what is deliberately not one.
 - [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the four
