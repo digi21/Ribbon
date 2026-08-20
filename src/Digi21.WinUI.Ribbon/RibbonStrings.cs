@@ -30,6 +30,13 @@ public static class RibbonStrings
     /// </remarks>
     public static string GroupLauncherNameFormat { get; set; } = "{0} options";
 
+    /// <summary>Gets or sets what the chevron announces itself as when pressing it drops the ribbon to one row.</summary>
+    /// <remarks>What the chevron does depends on <see cref="RibbonCollapseBehavior"/>, so it has a sentence for each: a button announcing that it minimises a ribbon it is about to simplify is worse than one that says nothing.</remarks>
+    public static string SimplifyRibbonName { get; set; } = "Simplify the ribbon";
+
+    /// <summary>Gets or sets what the same chevron announces itself as once the ribbon is down to one row.</summary>
+    public static string FullRibbonName { get; set; } = "Show the full ribbon";
+
     /// <summary>Gets or sets what the chevron that puts the ribbon away announces itself as.</summary>
     public static string MinimizeRibbonName { get; set; } = "Minimise the ribbon";
 

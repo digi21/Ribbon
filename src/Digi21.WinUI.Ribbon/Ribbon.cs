@@ -61,6 +61,14 @@ public partial class Ribbon : Control
             typeof(Ribbon),
             new PropertyMetadata(RibbonDisplayMode.Full, OnDisplayModeChanged));
 
+    /// <summary>Identifies the <see cref="CollapseBehavior"/> dependency property.</summary>
+    public static readonly DependencyProperty CollapseBehaviorProperty =
+        DependencyProperty.Register(
+            nameof(CollapseBehavior),
+            typeof(RibbonCollapseBehavior),
+            typeof(Ribbon),
+            new PropertyMetadata(RibbonCollapseBehavior.Simplify, OnCollapseBehaviorChanged));
+
     /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
     public static readonly DependencyProperty IsMinimizedProperty =
         DependencyProperty.Register(
@@ -104,7 +112,7 @@ public partial class Ribbon : Control
         var shortcut = new KeyboardAccelerator { Key = VirtualKey.F1, Modifiers = VirtualKeyModifiers.Control };
         shortcut.Invoked += (_, arguments) =>
         {
-            IsMinimized = !IsMinimized;
+            Collapse();
             arguments.Handled = true;
         };
 
@@ -143,6 +151,27 @@ public partial class Ribbon : Control
     {
         get => (RibbonDisplayMode)GetValue(DisplayModeProperty);
         set => SetValue(DisplayModeProperty, value);
+    }
+
+    /// <summary>Gets or sets what the chevron, a double-click on a tab and <c>Ctrl+F1</c> do. Simplifying, out of the box.</summary>
+    /// <remarks>
+    /// <para>
+    /// One gesture with one meaning. Out of the box it drops the ribbon to
+    /// <see cref="RibbonDisplayMode.Simplified"/> and brings it back, which leaves the commands on
+    /// screen: a chevron in a corner is easy to press by accident, and pressing one should not leave
+    /// somebody in front of a window with no commands in it.
+    /// </para>
+    /// <para>
+    /// <see cref="RibbonCollapseBehavior.Minimize"/> is the Office behaviour - the ribbon goes away
+    /// and leaves its tabs - and <see cref="RibbonCollapseBehavior.None"/> takes the chevron off
+    /// altogether. Either way <see cref="DisplayMode"/> and <see cref="IsMinimized"/> stay writable,
+    /// so an application can offer the state the gesture does not reach from a menu of its own.
+    /// </para>
+    /// </remarks>
+    public RibbonCollapseBehavior CollapseBehavior
+    {
+        get => (RibbonCollapseBehavior)GetValue(CollapseBehaviorProperty);
+        set => SetValue(CollapseBehaviorProperty, value);
     }
 
     /// <summary>Gets or sets a value indicating whether the ribbon is put away, leaving only its tabs.</summary>
@@ -221,7 +250,7 @@ public partial class Ribbon : Control
 
         if (minimize is not null)
         {
-            minimize.Click += (_, _) => IsMinimized = !IsMinimized;
+            minimize.Click += (_, _) => Collapse();
         }
 
         if (GetTemplateChild(ExpandPart) is Button found)
@@ -328,6 +357,8 @@ public partial class Ribbon : Control
         {
             tab.Rows = rows;
         }
+
+        UpdateChevron();
     }
 
     private void OnHeaderChosen(object? sender, EventArgs arguments)
@@ -359,22 +390,75 @@ public partial class Ribbon : Control
 
     private void OnHeaderDoubleTapped(object sender, RoutedEventArgs arguments)
     {
-        IsMinimized = !IsMinimized;
+        Collapse();
+    }
+
+    // The one gesture, and the only place that decides what it means. Three ways in - the chevron,
+    // a double-click on a tab, Ctrl+F1 - and one thing out, because a chevron that simplified while
+    // the shortcut minimised would be two behaviours wearing one name.
+    private void Collapse()
+    {
+        switch (CollapseBehavior)
+        {
+            case RibbonCollapseBehavior.Simplify:
+                DisplayMode = DisplayMode == RibbonDisplayMode.Simplified
+                    ? RibbonDisplayMode.Full
+                    : RibbonDisplayMode.Simplified;
+                break;
+
+            case RibbonCollapseBehavior.Minimize:
+                IsMinimized = !IsMinimized;
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    private static void OnCollapseBehaviorChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
+    {
+        ((Ribbon)ribbon).UpdateChevron();
+    }
+
+    // The chevron says what the gesture will do, which depends on what the gesture means and on
+    // where the ribbon is now. Four sentences and two glyphs for what looks like one button, because
+    // a button that does the opposite of what it says is a button nobody can use without looking.
+    private void UpdateChevron()
+    {
+        if (minimize is null)
+        {
+            return;
+        }
+
+        if (CollapseBehavior == RibbonCollapseBehavior.None)
+        {
+            minimize.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        minimize.Visibility = Visibility.Visible;
+
+        bool collapsed = CollapseBehavior == RibbonCollapseBehavior.Minimize
+            ? IsMinimized
+            : DisplayMode == RibbonDisplayMode.Simplified;
+
+        if (minimizeGlyph is not null)
+        {
+            // Pointing the way it will move: down to bring the ribbon back, up to take it away.
+            minimizeGlyph.Glyph = collapsed ? "" : "";
+        }
+
+        string name = CollapseBehavior == RibbonCollapseBehavior.Minimize
+            ? collapsed ? RibbonStrings.ExpandRibbonName : RibbonStrings.MinimizeRibbonName
+            : collapsed ? RibbonStrings.FullRibbonName : RibbonStrings.SimplifyRibbonName;
+
+        AutomationProperties.SetName(minimize, name);
+        ToolTipService.SetToolTip(minimize, name);
     }
 
     private void UpdateMinimizedState()
     {
-        if (minimizeGlyph is not null)
-        {
-            // Pointing the way it will move: down to bring the ribbon back, up to put it away.
-            minimizeGlyph.Glyph = IsMinimized ? "" : "";
-        }
-
-        if (minimize is not null)
-        {
-            AutomationProperties.SetName(minimize, IsMinimized ? RibbonStrings.ExpandRibbonName : RibbonStrings.MinimizeRibbonName);
-            ToolTipService.SetToolTip(minimize, AutomationProperties.GetName(minimize));
-        }
+        UpdateChevron();
 
         if (overlay is { IsOpen: true })
         {

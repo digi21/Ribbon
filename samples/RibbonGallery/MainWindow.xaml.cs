@@ -29,6 +29,12 @@ public sealed partial class MainWindow : Window
         // looking. IsMinimized being an ordinary dependency property is what makes this one line.
         Ribbon.RegisterPropertyChangedCallback(Digi21.WinUI.Ribbon.Ribbon.IsMinimizedProperty, (_, _) => ShowMinimizedState());
         ShowMinimizedState();
+
+        // And the same for the mode, for the same reason: out of the box the chevron in the corner
+        // is what simplifies the ribbon, so this switch is not the only way here either.
+        Ribbon.RegisterPropertyChangedCallback(
+            Digi21.WinUI.Ribbon.Ribbon.DisplayModeProperty,
+            (_, _) => Simplified.IsOn = Ribbon.DisplayMode == RibbonDisplayMode.Simplified);
     }
 
     // Used by the screenshot run, which drives the selector rather than the root so that the picture

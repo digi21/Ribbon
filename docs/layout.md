@@ -79,6 +79,19 @@ way a full ribbon would lay it out, so asking for one row costs nothing but the 
 The mode is independent of `IsMinimized`, and switching it rebuilds nothing: a control an application
 put in a group is the same object in both modes, with its focus and its bindings intact.
 
+It is also where the ribbon goes when the user asks for less of it. There is one gesture for asking —
+the chevron in the corner, a double-click on a tab, `Ctrl+F1` — and `CollapseBehavior` says what it
+means: `Simplify` out of the box, `Minimize` for the Office behaviour of leaving only the tabs, and
+`None` for a ribbon that stays where it is and has no chevron at all.
+
+```xml
+<ribbon:Ribbon CollapseBehavior="Minimize" />
+```
+
+One gesture with one meaning, rather than a chevron that simplifies while the shortcut minimises. The
+default is the one that leaves the commands on screen: a chevron in a corner is easy to press by
+accident, and pressing one should not leave somebody in front of a window with nothing to press.
+
 ## Giving way
 
 Each group has a **cap** — `Large`, `Normal` or `Small` — and each of its items takes the largest

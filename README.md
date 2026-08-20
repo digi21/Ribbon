@@ -45,11 +45,16 @@ what the library is measured against:
   too; drop it in bare and give it an `AutomationProperties.Name` of your own, because there is then
   no label to borrow one from.
 - **A launcher button per group**, off by default, that opens a flyout when switched on.
-- **Minimizing, as in Office**: double-click a tab, press the chevron or `Ctrl+F1` and only the tab
-  strip is left. Clicking a tab then opens the ribbon *over* the content rather than pushing it
-  down, and that overlay closes on a command, on a click outside and on `Esc` without minimizing or
-  restoring anything. `IsMinimized` is an ordinary two-way property, so an application can save it
-  with the rest of its settings and put it back on the next run.
+- **One gesture for asking for less of it**: the chevron in the corner, a double-click on a tab, or
+  `Ctrl+F1`. `CollapseBehavior` says what it means, and out of the box it means one row, not none:
+  the commands are still there afterwards, because a chevron in a corner is easy to press by
+  accident and pressing one should not leave somebody in front of a window with nothing to press.
+  Set it to `Minimize` for the Office behaviour - only the tab strip is left, clicking a tab opens
+  the ribbon *over* the content rather than pushing it down, and that overlay closes on a command,
+  on a click outside and on `Esc` without minimizing or restoring anything - or to `None` to take
+  the chevron off altogether. `DisplayMode` and `IsMinimized` are ordinary two-way properties either
+  way, so an application can offer the state the gesture does not reach and save what the user chose
+  with the rest of its settings.
 - **UI Automation that works**: `InvokePattern` on buttons, `TogglePattern` on two-state ones, and
   `AutomationProperties.Name` on everything, so the application on top can be driven by a test rather
   than by screen coordinates.

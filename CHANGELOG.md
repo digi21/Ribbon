@@ -31,12 +31,20 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   button at every width, and is laid out inside the flyout the way a full ribbon would lay it out.
   Independent of `IsMinimized`, and nothing is rebuilt on the way: the control an application put in
   a group is the same object in both modes.
+- `Ribbon.CollapseBehavior` and `RibbonCollapseBehavior`: what the chevron, a double-click on a tab
+  and `Ctrl+F1` do. One gesture with one meaning, chosen by the application - `Simplify`, the
+  default, drops the ribbon to one row and brings it back; `Minimize` is the Office behaviour of
+  putting it away; `None` takes the chevron off and leaves the ribbon where it is. Simplifying is
+  the default because a chevron in a corner is easy to press by accident, and pressing one should
+  not leave somebody in front of a window with no commands in it.
 - `Ribbon.IsMinimized`, with a chevron in the tab strip, a double-click on a tab and `Ctrl+F1`.
   Minimised, the ribbon leaves only its tabs and gives the room back to the window; clicking a tab
   then opens it *over* the content, transiently, without changing the property — so an application
   saving `IsMinimized` records what the user asked for rather than what they last looked at.
 - `RibbonStrings`, the few sentences the ribbon says on its own account: what a group's launcher is
-  called, what the button a folded group becomes is called, and the two the chevron uses.
+  called, what the button a folded group becomes is called, and the four the chevron uses - two for
+  a ribbon that simplifies when it is collapsed and two for one that minimises, because a button
+  announcing that it minimises a ribbon it is about to simplify is worse than one that says nothing.
 - `RibbonTabHeaderAutomationPeer`, so that a tab announces itself as a tab and can be chosen by
   something other than a click on a coordinate.
 - A group is never narrower than its own name, as in Office, so the name under a group stays

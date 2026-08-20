@@ -6,10 +6,10 @@ Microsoft Store, asked for them.
 There is only one half here, unlike in `Digi21.WinUI.PropertyGrid`. **The ribbon does not translate
 what an application puts in it**: the name of a tab, of a group, of an item is the application's, and
 arrives already in the user's language, because only the application knows what it is saying. What
-the ribbon says on its own account is four sentences, and they are properties on `RibbonStrings`.
+the ribbon says on its own account is six sentences, and they are properties on `RibbonStrings`.
 
 Nothing a user reads comes from a resource key, so there is no dictionary to merge for this. Set the
-four from code, once, from wherever the application keeps its translations.
+six from code, once, from wherever the application keeps its translations.
 
 **Set them early, but not too early.** In an unpackaged WinUI 3 application that means `OnLaunched`
 and not the constructor of `App`.
@@ -19,11 +19,17 @@ group's name and must keep their `{0}`. A translation that drops it produces a l
 reader calls the same thing, which is the failure the sentence exists to avoid. `LocalisationTests`
 checks that every translation below still has it.
 
-Two of the four are never seen and only heard: `GroupLauncherNameFormat` and
+Two of the six are never seen and only heard: `GroupLauncherNameFormat` and
 `CollapsedGroupNameFormat` are automation names. They are the ones worth getting right for somebody
 who cannot see the icon that is beside them.
 
-The four are read by `LocalisationTests`, which also checks that this file mentions every property of
+Four of them are what the chevron says, two per behaviour: the ribbon can be set to simplify when it
+is collapsed or to minimise, and a button announcing that it minimises a ribbon it is about to
+simplify is worse than one that says nothing. An application that has fixed
+`CollapseBehavior` still translates all four, because it costs one line and the wrong one is worse
+than a missing one.
+
+The six are read by `LocalisationTests`, which also checks that this file mentions every property of
 the class and that every language below sets all of them, so the file cannot quietly drift away from
 the code.
 
@@ -34,6 +40,8 @@ RibbonStrings.GroupLauncherNameFormat = "Opcions de {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, grup plegat";
 RibbonStrings.MinimizeRibbonName = "Minimitza la cinta d'opcions";
 RibbonStrings.ExpandRibbonName = "Expandeix la cinta d'opcions";
+RibbonStrings.SimplifyRibbonName = "Simplifica la cinta d'opcions";
+RibbonStrings.FullRibbonName = "Mostra la cinta d'opcions completa";
 ```
 
 ## English (`en`)
@@ -43,6 +51,8 @@ RibbonStrings.GroupLauncherNameFormat = "{0} options";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, collapsed group";
 RibbonStrings.MinimizeRibbonName = "Minimise the ribbon";
 RibbonStrings.ExpandRibbonName = "Expand the ribbon";
+RibbonStrings.SimplifyRibbonName = "Simplify the ribbon";
+RibbonStrings.FullRibbonName = "Show the full ribbon";
 ```
 
 ## Basque (`eu`)
@@ -52,6 +62,8 @@ RibbonStrings.GroupLauncherNameFormat = "{0} aukerak";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, tolestutako taldea";
 RibbonStrings.MinimizeRibbonName = "Zinta minimizatu";
 RibbonStrings.ExpandRibbonName = "Zinta zabaldu";
+RibbonStrings.SimplifyRibbonName = "Zinta sinplifikatu";
+RibbonStrings.FullRibbonName = "Zinta osoa erakutsi";
 ```
 
 ## French (`fr`)
@@ -61,6 +73,8 @@ RibbonStrings.GroupLauncherNameFormat = "Options de {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, groupe réduit";
 RibbonStrings.MinimizeRibbonName = "Réduire le ruban";
 RibbonStrings.ExpandRibbonName = "Développer le ruban";
+RibbonStrings.SimplifyRibbonName = "Simplifier le ruban";
+RibbonStrings.FullRibbonName = "Afficher le ruban complet";
 ```
 
 ## Galician (`gl`)
@@ -70,6 +84,8 @@ RibbonStrings.GroupLauncherNameFormat = "Opcións de {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, grupo pregado";
 RibbonStrings.MinimizeRibbonName = "Minimizar a cinta de opcións";
 RibbonStrings.ExpandRibbonName = "Expandir a cinta de opcións";
+RibbonStrings.SimplifyRibbonName = "Simplificar a cinta de opcións";
+RibbonStrings.FullRibbonName = "Mostrar a cinta de opcións completa";
 ```
 
 ## German (`de`)
@@ -79,6 +95,8 @@ RibbonStrings.GroupLauncherNameFormat = "Optionen für {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, reduzierte Gruppe";
 RibbonStrings.MinimizeRibbonName = "Menüband minimieren";
 RibbonStrings.ExpandRibbonName = "Menüband erweitern";
+RibbonStrings.SimplifyRibbonName = "Menüband vereinfachen";
+RibbonStrings.FullRibbonName = "Vollständiges Menüband anzeigen";
 ```
 
 ## Italian (`it`)
@@ -88,6 +106,8 @@ RibbonStrings.GroupLauncherNameFormat = "Opzioni di {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, gruppo compresso";
 RibbonStrings.MinimizeRibbonName = "Riduci la barra multifunzione";
 RibbonStrings.ExpandRibbonName = "Espandi la barra multifunzione";
+RibbonStrings.SimplifyRibbonName = "Semplifica la barra multifunzione";
+RibbonStrings.FullRibbonName = "Mostra la barra multifunzione completa";
 ```
 
 ## Portuguese (`pt`)
@@ -97,6 +117,8 @@ RibbonStrings.GroupLauncherNameFormat = "Opções de {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, grupo recolhido";
 RibbonStrings.MinimizeRibbonName = "Minimizar o friso";
 RibbonStrings.ExpandRibbonName = "Expandir o friso";
+RibbonStrings.SimplifyRibbonName = "Simplificar o friso";
+RibbonStrings.FullRibbonName = "Mostrar o friso completo";
 ```
 
 ## Spanish (`es`)
@@ -106,6 +128,8 @@ RibbonStrings.GroupLauncherNameFormat = "Opciones de {0}";
 RibbonStrings.CollapsedGroupNameFormat = "{0}, grupo plegado";
 RibbonStrings.MinimizeRibbonName = "Minimizar la cinta de opciones";
 RibbonStrings.ExpandRibbonName = "Expandir la cinta de opciones";
+RibbonStrings.SimplifyRibbonName = "Simplificar la cinta de opciones";
+RibbonStrings.FullRibbonName = "Mostrar la cinta de opciones completa";
 ```
 
 ## The words for "ribbon"
