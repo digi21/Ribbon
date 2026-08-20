@@ -44,6 +44,15 @@ public static class RibbonStrings
     /// <remarks>Two sentences rather than one, because a button that does the opposite of what it says is a button nobody can use without looking.</remarks>
     public static string ExpandRibbonName { get; set; } = "Expand the ribbon";
 
+    /// <summary>Gets or sets what a contextual tab announces itself as. Takes the tab's name.</summary>
+    /// <remarks>
+    /// The accent line above a contextual tab says that it is one, and says it only to somebody
+    /// looking at the strip. What makes a contextual tab worth having is that it was not there a
+    /// moment ago, and a screen reader that reads out its name and nothing else has left out the
+    /// whole of that.
+    /// </remarks>
+    public static string ContextualTabNameFormat { get; set; } = "{0}, contextual tab";
+
     /// <summary>Gets or sets what the button a folded group becomes announces itself as. Takes the group's name.</summary>
     /// <remarks>
     /// Worth saying that it is folded rather than only naming it: the commands it holds are one press

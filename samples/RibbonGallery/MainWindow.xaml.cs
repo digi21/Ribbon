@@ -35,6 +35,16 @@ public sealed partial class MainWindow : Window
         Ribbon.RegisterPropertyChangedCallback(
             Digi21.WinUI.Ribbon.Ribbon.DisplayModeProperty,
             (_, _) => Simplified.IsOn = Ribbon.DisplayMode == RibbonDisplayMode.Simplified);
+
+        // The two events a contextual tab raises, used here for the one thing this window can say
+        // that the strip cannot show by itself: where the ribbon ended up afterwards. They arrive
+        // after the move rather than before it, so SelectedTab below is the answer and not the
+        // question.
+        Ribbon.TabActivated += (_, tab) =>
+            ContextualResult.Text = $"'{tab.Label}' is on the strip, and the ribbon is showing '{Ribbon.SelectedTab?.Label}'";
+
+        Ribbon.TabDeactivated += (_, tab) =>
+            ContextualResult.Text = $"'{tab.Label}' has gone, and the ribbon is showing '{Ribbon.SelectedTab?.Label}'";
     }
 
     // Used by the screenshot run, which drives the selector rather than the root so that the picture
@@ -78,6 +88,16 @@ public sealed partial class MainWindow : Window
         // the same objects on the way there and on the way back; the switch below still writes to
         // them.
         Ribbon.DisplayMode = Simplified.IsOn ? RibbonDisplayMode.Simplified : RibbonDisplayMode.Full;
+    }
+
+    private void OnPictureSelected(object sender, RoutedEventArgs arguments)
+    {
+        // The whole of the API for a contextual tab: one property, tied to whatever the application
+        // knows. Everything else - the tab arriving in the place it was declared, the ribbon jumping
+        // to it, the ribbon putting the user back where they were when it goes - follows from this
+        // line. In an application it would be a binding rather than a handler; it is a handler here
+        // so that the switch and the line above it sit next to each other.
+        Picture.IsActive = PictureSelected.IsOn;
     }
 
     private void OnRename(object sender, RoutedEventArgs arguments)

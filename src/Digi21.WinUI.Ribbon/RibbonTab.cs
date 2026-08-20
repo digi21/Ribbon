@@ -8,13 +8,35 @@ using Microsoft.UI.Xaml.Markup;
 namespace Digi21.WinUI.Ribbon;
 
 /// <summary>One tab of the ribbon: a name in the strip and a row of groups under it.</summary>
+/// <remarks>
+/// <para>
+/// A tab can also come and go. Set <see cref="IsContextual"/> once, declare its groups once, and then
+/// tie <see cref="IsActive"/> to whatever state of the application the tab belongs to: the tab is on
+/// the strip while that is true and off it while it is not, and the controls inside it are the same
+/// objects throughout. That is Office's contextual tab - the table tools that arrive when the caret
+/// is in a table - and it is the answer to a set of commands that would otherwise sit on a fixed tab
+/// greyed out, saying nothing about when they will work.
+/// </para>
+/// </remarks>
 [ContentProperty(Name = nameof(Groups))]
 [TemplatePart(Name = GroupsPart, Type = typeof(RibbonGroupsPanel))]
 public partial class RibbonTab : Control
 {
     /// <summary>Identifies the <see cref="Label"/> dependency property.</summary>
     public static readonly DependencyProperty LabelProperty =
-        DependencyProperty.Register(nameof(Label), typeof(string), typeof(RibbonTab), new PropertyMetadata(string.Empty));
+        DependencyProperty.Register(nameof(Label), typeof(string), typeof(RibbonTab), new PropertyMetadata(string.Empty, OnChromeChanged));
+
+    /// <summary>Identifies the <see cref="IsContextual"/> dependency property.</summary>
+    public static readonly DependencyProperty IsContextualProperty =
+        DependencyProperty.Register(nameof(IsContextual), typeof(bool), typeof(RibbonTab), new PropertyMetadata(false, OnChromeChanged));
+
+    /// <summary>Identifies the <see cref="IsActive"/> dependency property.</summary>
+    public static readonly DependencyProperty IsActiveProperty =
+        DependencyProperty.Register(nameof(IsActive), typeof(bool), typeof(RibbonTab), new PropertyMetadata(true, OnActiveChanged));
+
+    /// <summary>Identifies the <see cref="SelectsWhenActivated"/> dependency property.</summary>
+    public static readonly DependencyProperty SelectsWhenActivatedProperty =
+        DependencyProperty.Register(nameof(SelectsWhenActivated), typeof(bool), typeof(RibbonTab), new PropertyMetadata(true));
 
     private const string GroupsPart = "PART_Groups";
 
@@ -38,9 +60,96 @@ public partial class RibbonTab : Control
         set => SetValue(LabelProperty, value);
     }
 
+    /// <summary>Gets or sets a value indicating whether this is a tab that comes and goes. Fixed, out of the box.</summary>
+    /// <remarks>
+    /// <para>
+    /// A contextual tab is marked as one - an accent line above its name, which is where the coloured
+    /// heading over a set of them would go - and it steps forward as it arrives, which a fixed tab
+    /// hidden and shown again never does. It also says so to a screen reader, through
+    /// <see cref="RibbonStrings.ContextualTabNameFormat"/>.
+    /// </para>
+    /// <para>
+    /// What switches it on and off is <see cref="IsActive"/>. This says what kind of tab it is, and
+    /// an application sets it once.
+    /// </para>
+    /// </remarks>
+    public bool IsContextual
+    {
+        get => (bool)GetValue(IsContextualProperty);
+        set => SetValue(IsContextualProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether the tab is on the strip. On, out of the box.</summary>
+    /// <remarks>
+    /// <para>
+    /// The two-way property a contextual tab is driven by: tie it to whatever the tab is about - a
+    /// selection waiting to be dealt with, a table the caret is in - and the tab arrives and leaves
+    /// with it. Nothing is rebuilt on the way. The tab is realized once, when it is added to
+    /// <see cref="Ribbon.Tabs"/>, and the controls an application put in its groups are the same
+    /// objects every time it comes back.
+    /// </para>
+    /// <para>
+    /// A tab that is not active has no header, so it is not on the strip and UI Automation cannot see
+    /// it either. Asking the ribbon to select one leaves the ribbon where it was. If it was the tab
+    /// on show when it went, the ribbon goes back to the tab that was showing when this one was
+    /// chosen - or to the first tab there is, if that one has gone too.
+    /// </para>
+    /// <para>
+    /// It works on a fixed tab as well, and hides it. What it does not do there is announce itself: a
+    /// tab that arrives with no mark on it and does not step forward is one a user finds by noticing
+    /// that the strip is a name longer than it was, which is not noticing at all.
+    /// </para>
+    /// </remarks>
+    public bool IsActive
+    {
+        get => (bool)GetValue(IsActiveProperty);
+        set => SetValue(IsActiveProperty, value);
+    }
+
+    /// <summary>Gets or sets a value indicating whether a contextual tab is shown as it arrives. On, out of the box.</summary>
+    /// <remarks>
+    /// <para>
+    /// On, because a contextual tab appears at the moment its commands start being worth having, and
+    /// whoever did the thing that made it appear is usually looking for one of them. Off for the tab
+    /// that arrives while the user is in the middle of something else, where taking the strip out
+    /// from under them is worse than letting them find it.
+    /// </para>
+    /// <para>
+    /// Only a contextual tab does this, and only when it is switched on after the ribbon has been
+    /// built. A tab that is already active when the ribbon is first laid out - declared that way in
+    /// XAML - is simply on the strip: at startup nothing has just happened, and the ribbon opens on
+    /// the tab the application opens on.
+    /// </para>
+    /// <para>
+    /// A fixed tab switched back on with <see cref="IsActive"/> stays where it is put, whatever this
+    /// says.
+    /// </para>
+    /// </remarks>
+    public bool SelectsWhenActivated
+    {
+        get => (bool)GetValue(SelectsWhenActivatedProperty);
+        set => SetValue(SelectsWhenActivatedProperty, value);
+    }
+
     /// <summary>Gets the groups of this tab, left to right.</summary>
     /// <remarks>The order here is the order on screen; which of them gives way first is <see cref="RibbonGroup.Priority"/>, not this.</remarks>
     public IList<RibbonGroup> Groups => groups;
+
+    // The ribbon this tab has been added to, or null while it belongs to nobody.
+    //
+    // A reference the ribbon writes when it takes the tab, and not a walk up the visual tree, which
+    // the rest of this library refuses to do for a reason that holds here too: a minimised ribbon
+    // moves its body into a popup, and a tab reading its way up would find the popup. This says who
+    // owns the tab rather than where it happens to be drawn.
+    internal Ribbon? Owner { get; set; }
+
+    // Where the ribbon goes back to if this tab is switched off while it is the one on show.
+    //
+    // Recorded when the tab is chosen and not when it arrives, which is the difference between "the
+    // tab you came from" and "the tab you were on some time ago": a contextual tab that arrives
+    // without taking the strip, is left alone for a while and is then clicked, goes back to wherever
+    // the user actually was.
+    internal RibbonTab? Restore { get; set; }
 
     // The rows the groups of this tab are laid out in, handed down from the ribbon and handed on to
     // the groups. Down a chain rather than read back up one, because a minimised ribbon moves its
@@ -63,6 +172,12 @@ public partial class RibbonTab : Control
     // How tall this tab needs to be: the group that needs the most. Asked of every tab by the ribbon,
     // whether or not it is the one showing, so that choosing a tab never changes the height of the
     // strip an application has put its whole window under.
+    //
+    // Every tab includes the contextual ones that are switched off, and that is a trade taken on
+    // purpose. A ribbon that grew as a contextual tab arrived would push the window down at the
+    // moment somebody was reaching for a command in it - the same fault choosing a tab used to cause,
+    // no better for having a different trigger. What it costs is that a contextual tab holding a
+    // stack of controls makes the ribbon that tall from the start, whether or not it is ever shown.
     internal double RequiredHeight
     {
         get
@@ -85,6 +200,22 @@ public partial class RibbonTab : Control
 
         panel = GetTemplateChild(GroupsPart) as RibbonGroupsPanel;
         Sync();
+    }
+
+    private static void OnChromeChanged(DependencyObject tab, DependencyPropertyChangedEventArgs arguments)
+    {
+        RibbonTab self = (RibbonTab)tab;
+        self.Owner?.OnTabChromeChanged(self);
+    }
+
+    private static void OnActiveChanged(DependencyObject tab, DependencyPropertyChangedEventArgs arguments)
+    {
+        // Told to the ribbon rather than acted on here. What a tab arriving or leaving means is a
+        // question about the strip as a whole - which headers there are, which tab is showing
+        // afterwards - and only the ribbon can answer it. A tab that belongs to nobody yet has
+        // nothing to tell: the ribbon reads the property when it takes the tab.
+        RibbonTab self = (RibbonTab)tab;
+        self.Owner?.OnTabActivationChanged(self);
     }
 
     private void OnGroupsChanged(object? sender, NotifyCollectionChangedEventArgs arguments)

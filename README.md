@@ -55,9 +55,20 @@ what the library is measured against:
   the chevron off altogether. `DisplayMode` and `IsMinimized` are ordinary two-way properties either
   way, so an application can offer the state the gesture does not reach and save what the user chose
   with the rest of its settings.
-- **UI Automation that works**: `InvokePattern` on buttons, `TogglePattern` on two-state ones, and
+- **Contextual tabs**: a tab that is on the strip only while it is worth having. Declare it once with
+  its groups, set `IsContextual`, and tie `IsActive` to whatever the tab is about — a selection
+  waiting to be dealt with, a table the caret is in. It arrives marked with an accent line and steps
+  forward as it comes, unless you set `SelectsWhenActivated="False"`; when it goes, the ribbon goes
+  back to the tab the user came from. It never changes the ribbon's height, and nothing is rebuilt on
+  the way, so a tab that comes and goes twenty times a minute costs one build.
+  [docs/contextual-tabs.md](https://github.com/digi21/Ribbon/blob/main/docs/contextual-tabs.md) has
+  every decided behaviour, including what happens when it disappears out from under you.
+- **UI Automation that works**: `InvokePattern` on buttons, `TogglePattern` on two-state ones,
+  `TabItem` with `SelectionItemPattern` on every tab and `SelectionPattern` on the ribbon itself, and
   `AutomationProperties.Name` on everything, so the application on top can be driven by a test rather
-  than by screen coordinates.
+  than by screen coordinates. A tab that is off the strip is out of the automation tree rather than
+  present and unpressable, and a tab arriving says so — as a CLR event in process, and as a
+  `StructureChanged` event out of it.
 - **Light and dark**, following the system, built on the WinUI theme resources, with monochrome icons
   tinted from the foreground so they stay visible in both.
 - **One row, as in Office**: `DisplayMode="Simplified"` lays the whole strip out in a single row,
@@ -67,6 +78,12 @@ what the library is measured against:
   row is its button at every width, with everything it holds laid out in the flyout the way a full
   ribbon would. It is independent of minimizing, and the controls in a group are the same objects
   before and after the switch.
+- **A change of tab you can see**: the tab arriving fades in from the side you moved towards, in
+  160 ms. It is a render transform and an opacity, so the layout neither sees it nor runs again for
+  it, and the tab is chosen, laid out and clickable before the first frame of it is drawn.
+  `TabTransition="Fade"` takes the movement off and `"None"` takes the whole thing off. Whatever it
+  says, a system told to show no animations is obeyed, and a minimised ribbon opening a tab over the
+  content cuts: the popup that carries it already arrives with an animation of its own.
 - **Keyboard**: Tab and the arrow keys move between tabs and items, Esc closes a drop-down.
 - **Correct at 100 %, 125 %, 150 % and 200 %.**
 - **The consumer supplies the text, already translated.** The library does not translate ribbon
@@ -106,15 +123,16 @@ keys, where an override has to go, how to retemplate a control, and what is deli
 The ribbon does not translate what you put in it: the name of a tab, of a group, of an item is yours
 and arrives already in the user's language, because only your application knows what it is saying.
 
-What the ribbon says on its own account is four sentences, and two of them are never seen — they are
-what a screen reader is told about a group's launcher and about the button a folded group becomes.
-They are properties on `RibbonStrings`, set once from wherever you keep your translations:
+What the ribbon says on its own account is seven sentences, and three of them are never seen — they
+are what a screen reader is told about a group's launcher, about the button a folded group becomes,
+and about a contextual tab. They are properties on `RibbonStrings`, set once from wherever you keep
+your translations:
 
 ```csharp
 RibbonStrings.GroupLauncherNameFormat = "Opciones de {0}";
 ```
 
-[docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all four
+[docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all seven
 in Catalan, English, Basque, French, Galician, German, Italian, Portuguese and Spanish, each using
 the word Office uses in that language rather than a translation of the English one.
 
@@ -123,6 +141,9 @@ the word Office uses in that language rather than a translation of the English o
 - [How the ribbon decides what fits](https://github.com/digi21/Ribbon/blob/main/docs/layout.md) —
   the three shapes, the columns of three, the order groups give way in, and why a width can only ever
   have one answer.
+- [Contextual tabs](https://github.com/digi21/Ribbon/blob/main/docs/contextual-tabs.md) — a tab that
+  comes and goes: the three properties, where it appears, where the ribbon goes when it leaves, and
+  what it does to the height, to a simplified ribbon and to a minimised one.
 - [Theming](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) — every brush and metric key,
   and what is deliberately not one.
 - [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the four
@@ -146,7 +167,9 @@ The architecture is meant not to rule them out, but none of these is being built
 
 - Keytips.
 - A backstage or File menu.
-- Contextual tabs.
+- Contextual tab *groups*: Office's coloured heading spanning several contextual tabs at once, each
+  set in its own colour. A single contextual tab is here; the heading over a set of them is not, and
+  the shape is left open for it rather than closed against it.
 - User customization of the ribbon.
 
 ## Sample

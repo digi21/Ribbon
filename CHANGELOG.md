@@ -11,6 +11,53 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 
 ### Added
 
+- `Ribbon.TabTransition`: the change from one tab to the next is drawn rather than cut. The tab
+  arriving fades in from the side the user moved towards, over 160 ms, because a tab is a whole strip
+  of commands replaced at once and replacing it between two frames leaves the eye to work out on its
+  own that everything under the strip is now something else. It is chrome over a change that has
+  already happened - the tab is chosen, laid out and hit-testable before the first frame of it is
+  drawn - and what moves is a render transform and an opacity, neither of which the layout system can
+  see, so the ribbon is exactly as tall throughout as it was before and nothing is measured twice.
+  `Fade` drops the movement, `None` draws nothing; a system told to show no animations is obeyed
+  whatever the property says, and a minimised ribbon opening a tab over the content cuts, because the
+  popup that carries it arrives with an animation of its own. A change of tab landing on top of one
+  still being drawn stops it, so no tab is ever left standing where a transition pushed it.
+- `RibbonTab.IsContextual`, `IsActive` and `SelectsWhenActivated`: a tab that is on the strip only
+  while it is worth having, which is Office's contextual tab. Declared once with its groups and
+  driven from then on by one ordinary two-way property, because the alternative it replaces - a fixed
+  tab whose commands are switched off most of the time - never says *when* they will work, and a
+  greyed-out button certainly never says that the moment has just arrived. It appears where it was
+  declared rather than being moved to the end, so the visual order and `Tabs` stay the same thing; it
+  steps forward as it arrives unless told not to; and when it goes it puts the user back on the tab
+  they came from, or on the first tab there is when that one has gone too. It never changes the
+  ribbon's height - every tab pays into the single height, the ones switched off included, because a
+  ribbon that grew as a tab arrived would push the window down at the moment somebody was reaching
+  into it - and nothing is rebuilt on the way, so a tab that comes and goes twenty times a minute
+  costs one build. A simplified ribbon lays it out in one row like any other tab; a minimised ribbon
+  shows its header without opening itself over the content, because a user who put the ribbon away
+  asked for the content.
+- `Ribbon.TabActivated` and `Ribbon.TabDeactivated`, raised after the strip has been rebuilt and
+  after any move to the new tab, so a handler asking what is showing is told where the ribbon ended
+  up rather than where it was on the way.
+- `RibbonAutomationPeer`: the ribbon answers to `Tab` with `SelectionPattern`, and a tab header's
+  `SelectionContainer` now names it instead of being null. The headers have called themselves tab
+  items since the probe found them answering to no pattern at all; a tab item with no set above it
+  was half an answer, and it stopped being enough when the set of tabs became something that changes
+  while the application runs. A tab that is off the strip has a collapsed header and is therefore out
+  of the automation tree altogether - unfindable rather than findable and unpressable - and a tab
+  arriving raises `StructureChanged` on the ribbon, which is the same news for a driver out of
+  process that `TabActivated` is for one in it.
+- `RibbonStrings.ContextualTabNameFormat`, in nine languages: what a screen reader is told a
+  contextual tab is. The accent line above it says it is one only to somebody looking at the strip,
+  and what makes a contextual tab worth having is that it was not there a moment ago.
+- Renaming a tab renames its header. `RibbonTab.Label` was read once, when the strip was built, so a
+  tab renamed after that kept the name it was born with - which nothing had noticed because nothing
+  renamed a tab. Contextual tabs needed the same path for `IsContextual`, and the label came with it.
+- `RibbonContextualTabAccentBrush` and `RibbonContextualTabAccentHeight`: the line a contextual tab
+  wears. Along the top edge, because the bottom one marks the tab on show and a contextual tab that
+  is also the one on show has to say both things at once, and edge to edge rather than inset so that
+  two of them side by side draw one unbroken line - which is where the coloured heading over a set of
+  them goes, the day there is one.
 - The control: `Ribbon`, `RibbonTab`, `RibbonGroup`, `RibbonButton`, `RibbonToggleButton`,
   `RibbonDropDownButton`, `RibbonContentItem` and `RibbonSeparator`, with `IRibbonItem` as what the
   item types share. Each derives from the WinUI control that already behaves correctly — a

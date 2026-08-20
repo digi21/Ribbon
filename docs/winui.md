@@ -47,6 +47,20 @@ does not work.
 answered to no pattern at all until `RibbonTabHeaderAutomationPeer` was written, which meant every
 tab was unreachable except by clicking a coordinate.
 
+## A collapsed element has no peer at all, not a peer that says it is hidden
+
+`FrameworkElementAutomationPeer.CreatePeerForElement` returns **null** for an element whose
+`Visibility` is `Collapsed`, rather than a peer reporting `IsOffscreen`. That is what makes
+`Visibility.Collapsed` the right way to take a contextual tab off the strip: the header is kept — the
+same object, for when the tab comes back — and UI Automation stops admitting to it, so a driver
+cannot find a tab it would not be able to press.
+
+It cuts the other way for any code that sweeps a visual tree and asks each element for its name and
+patterns. The probe's `UIA` scenario did exactly that and started failing the day a tab could be off
+the strip: it was asking a tab that is not there to answer for itself. A sweep like that has to
+filter on `Visibility` and say so, because the alternative — a sweep that silently skips whatever has
+no peer — is one that quietly stops covering things.
+
 ## A resize is delivered before the layout it causes
 
 `AppWindow.Resize` hands the island its new size and returns; the measure and arrange it causes are

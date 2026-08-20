@@ -196,6 +196,41 @@
                 </ribbon:RibbonGroup>
             </ribbon:RibbonTab>
 
+            <!--
+                Last on purpose, which is where Office puts a contextual tab: the strip draws the
+                tabs in the order they are declared and never reorders them, so declaring it here is
+                the whole of putting it on the right.
+
+                Off to begin with, and switched on from the panel below. Everything in it is built
+                now, once, and stays built while the tab is off the strip.
+            -->
+            <ribbon:RibbonTab
+                x:Name="Picture"
+                Label="Picture"
+                IsContextual="True"
+                IsActive="False">
+                <ribbon:RibbonGroup Label="Adjust" Priority="0">
+                    <ribbon:RibbonGroup.IconSource>
+                        <SymbolIconSource Symbol="Edit" />
+                    </ribbon:RibbonGroup.IconSource>
+                    <ribbon:RibbonButton Label="Crop">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Crop" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
+                    <ribbon:RibbonButton Label="Rotate">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Rotate" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
+                    <ribbon:RibbonToggleButton x:Name="Frame" Label="Frame">
+                        <ribbon:RibbonToggleButton.IconSource>
+                            <SymbolIconSource Symbol="Highlight" />
+                        </ribbon:RibbonToggleButton.IconSource>
+                    </ribbon:RibbonToggleButton>
+                </ribbon:RibbonGroup>
+            </ribbon:RibbonTab>
+
         </ribbon:Ribbon>
 
         <ScrollViewer Grid.Row="1">
@@ -247,6 +282,35 @@
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <Button Click="OnRename" Content="Rename Paste from code" />
                     <TextBlock x:Name="RenameResult" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="A tab that comes and goes" />
+
+                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                    Select a picture in a document and Office offers you the tools for one. The
+                    switch below is standing in for that selection: it is tied to one property of one
+                    tab, which is the whole of the API. Watch the accent line above the tab's name —
+                    that is how a contextual tab says it is one — and watch the ribbon jump to it, as
+                    it does out of the box, because a tab that appears at the moment its commands
+                    start working is a tab you are probably reaching for.
+                </TextBlock>
+
+                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                    Then switch it off from another tab, and from the Picture tab itself. From
+                    another tab, nothing moves. From the Picture tab, the ribbon puts you back on
+                    whichever tab you came from — not on the first one, and not on nothing. Notice
+                    also what does not happen: the ribbon is exactly as tall with the tab as without
+                    it, so the text you are reading never moves.
+                </TextBlock>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <ToggleSwitch
+                        x:Name="PictureSelected"
+                        Header=""
+                        OffContent="No picture selected"
+                        OnContent="A picture is selected"
+                        Toggled="OnPictureSelected" />
+                    <TextBlock x:Name="ContextualResult" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
 
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Built at run time" />

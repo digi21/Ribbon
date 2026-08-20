@@ -62,6 +62,7 @@ theme and turns every word invisible in a light one.
 | `RibbonTabPointerOverBackgroundBrush` | `SubtleFillColorSecondaryBrush` | A tab under the pointer. |
 | `RibbonTabPressedBackgroundBrush` | `SubtleFillColorTertiaryBrush` | A tab being pressed. |
 | `RibbonTabSelectionIndicatorBrush` | `AccentFillColorDefaultBrush` | The line under the tab on show. |
+| `RibbonContextualTabAccentBrush` | `AccentFillColorDefaultBrush` | The line above a contextual tab, which it wears on the strip whether or not it is the tab on show. One key for all of them: a set of contextual tabs in one colour and a second set in another is what a contextual tab *group* would bring, and this version has no groups. |
 | `RibbonGroupLabelForegroundBrush` | `TextFillColorSecondaryBrush` | The name under a group. |
 | `RibbonSeparatorBrush` | `DividerStrokeColorDefaultBrush` | The rule between two columns of a group. |
 | `RibbonItemPointerOverBackgroundBrush` | `SubtleFillColorSecondaryBrush` | An item under the pointer. |
@@ -76,6 +77,7 @@ whole of the marking, which is what the application this library was written for
 | Key | Default | Is |
 | --- | --- | --- |
 | `RibbonTabSelectionIndicatorHeight` | `2` | How thick the line under the tab on show is. |
+| `RibbonContextualTabAccentHeight` | `2` | How thick the line above a contextual tab is. |
 | `RibbonTabPadding` | `12,6` | The room around a tab's name. |
 | `RibbonTabCornerRadius` | `4,4,0,0` | The corners of a tab. |
 | `RibbonItemCornerRadius` | `4` | The corners of an item and of a group's launcher. |
@@ -87,6 +89,35 @@ whole of the marking, which is what the application this library was written for
 
 Metrics go in the root of the dictionary rather than in a theme dictionary, because they are the same
 in every theme.
+
+## Motion
+
+One thing moves that is not a colour: the change from one tab to the next. The tab arriving fades
+in from the side you moved towards - choosing a tab to the right brings it in from the right - over
+160 ms.
+
+```xml
+<ribbon:Ribbon TabTransition="Fade" />
+```
+
+`Fade` keeps the length and drops the movement; `None` draws nothing at all and the new tab is
+simply there in the next frame. The default is `Slide`.
+
+It is chrome over a change that has already happened. The tab is chosen, laid out and hit-testable
+before the first frame of the transition is drawn, so a command clicked while one is running is
+invoked; and what moves is a render transform and an opacity, neither of which the layout system can
+see, so nothing is measured twice and the ribbon is exactly as tall throughout as it was before.
+
+Two things overrule the property. A system told to show no animations - Settings, Accessibility,
+Visual effects, Animation effects - is obeyed whatever the ribbon has been set to, because a user
+who switched them off switched them off everywhere. And a minimised ribbon opening a tab over the
+content cuts: the popup that carries the tab out there arrives with an animation of its own, and two
+arrivals for one click is one too many. A tab chosen while that popup is already open is an ordinary
+change of tab and is drawn like one.
+
+How far the tab travels and how long it takes are not keys. They are one gesture, tuned once, and an
+application that wants it shorter wants `Fade`, which is what shorter turns into as it approaches
+zero.
 
 ## What is not a key, and why
 

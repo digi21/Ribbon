@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
@@ -15,6 +16,12 @@ namespace Digi21.WinUI.Ribbon.Primitives;
 /// so a window holding both looks like one window.
 /// </para>
 /// <para>
+/// A contextual tab carries a second line, above its name and across the whole of it, in the accent
+/// colour. Above rather than below because below is taken, and across the whole width rather than
+/// inset because two contextual tabs side by side then draw one unbroken line - which is where the
+/// coloured heading over a set of them goes, the day there is one.
+/// </para>
+/// <para>
 /// A <see cref="ButtonBase"/>, so that pressing it and reaching it from the keyboard are WinUI's
 /// rather than written here. It announces itself as a tab rather than as a button, through
 /// <see cref="RibbonTabHeaderAutomationPeer"/> - which had to be written, because unlike
@@ -26,11 +33,15 @@ public partial class RibbonTabHeader : ButtonBase
 {
     /// <summary>Identifies the <see cref="Label"/> dependency property.</summary>
     public static readonly DependencyProperty LabelProperty =
-        DependencyProperty.Register(nameof(Label), typeof(string), typeof(RibbonTabHeader), new PropertyMetadata(string.Empty, OnLabelChanged));
+        DependencyProperty.Register(nameof(Label), typeof(string), typeof(RibbonTabHeader), new PropertyMetadata(string.Empty, OnNameChanged));
 
     /// <summary>Identifies the <see cref="IsSelected"/> dependency property.</summary>
     public static readonly DependencyProperty IsSelectedProperty =
         DependencyProperty.Register(nameof(IsSelected), typeof(bool), typeof(RibbonTabHeader), new PropertyMetadata(false, OnIsSelectedChanged));
+
+    /// <summary>Identifies the <see cref="IsContextual"/> dependency property.</summary>
+    public static readonly DependencyProperty IsContextualProperty =
+        DependencyProperty.Register(nameof(IsContextual), typeof(bool), typeof(RibbonTabHeader), new PropertyMetadata(false, OnIsContextualChanged));
 
     private bool pointerOver;
     private bool pressed;
@@ -56,7 +67,19 @@ public partial class RibbonTabHeader : ButtonBase
         set => SetValue(IsSelectedProperty, value);
     }
 
+    /// <summary>Gets or sets a value indicating whether this names a tab that comes and goes.</summary>
+    public bool IsContextual
+    {
+        get => (bool)GetValue(IsContextualProperty);
+        set => SetValue(IsContextualProperty, value);
+    }
+
     internal RibbonTab? Tab { get; set; }
+
+    // The ribbon this header belongs to, so that its peer can name the set it is one of. A tab item
+    // whose selection container is nothing is a tab item with no set, which is most of what a driver
+    // wants to know about a tab.
+    internal Ribbon? Owner { get; set; }
 
     /// <summary>Occurs when this tab is chosen, by a click, by the keyboard or by an automated test.</summary>
     internal event EventHandler? Chosen;
@@ -80,6 +103,7 @@ public partial class RibbonTabHeader : ButtonBase
         // sliding out from nothing.
         UpdateSelectionState(useTransitions: false);
         UpdatePointerState(useTransitions: false);
+        UpdateContextualState(useTransitions: false);
     }
 
     /// <inheritdoc/>
@@ -124,9 +148,9 @@ public partial class RibbonTabHeader : ButtonBase
         UpdatePointerState(useTransitions: true);
     }
 
-    private static void OnLabelChanged(DependencyObject header, DependencyPropertyChangedEventArgs arguments)
+    private static void OnNameChanged(DependencyObject header, DependencyPropertyChangedEventArgs arguments)
     {
-        AutomationProperties.SetName(header, (string)arguments.NewValue);
+        ((RibbonTabHeader)header).UpdateAutomationName();
     }
 
     private static void OnIsSelectedChanged(DependencyObject header, DependencyPropertyChangedEventArgs arguments)
@@ -134,10 +158,19 @@ public partial class RibbonTabHeader : ButtonBase
         ((RibbonTabHeader)header).UpdateSelectionState(useTransitions: true);
     }
 
-    // Two groups rather than four combined states, which is what lets them stay independent: the
-    // pointer decides how long the line is and whether the tab darkens, and the selection decides
-    // whether the line is there at all. Hovering a tab that is not on show therefore stretches a
-    // line nobody can see, which costs nothing and keeps each group answerable to one question.
+    private static void OnIsContextualChanged(DependencyObject header, DependencyPropertyChangedEventArgs arguments)
+    {
+        var self = (RibbonTabHeader)header;
+
+        self.UpdateContextualState(useTransitions: false);
+        self.UpdateAutomationName();
+    }
+
+    // Three groups rather than eight combined states, which is what lets them stay independent: the
+    // pointer decides how long the line under the name is and whether the tab darkens, the selection
+    // decides whether that line is there at all, and being contextual decides the line above the
+    // name. Hovering a tab that is not on show therefore stretches a line nobody can see, which costs
+    // nothing and keeps each group answerable to one question.
     private void UpdatePointerState(bool useTransitions)
     {
         VisualStateManager.GoToState(this, pressed ? "Pressed" : pointerOver ? "PointerOver" : "Normal", useTransitions);
@@ -146,5 +179,34 @@ public partial class RibbonTabHeader : ButtonBase
     private void UpdateSelectionState(bool useTransitions)
     {
         VisualStateManager.GoToState(this, IsSelected ? "Selected" : "Unselected", useTransitions);
+
+        // Said out loud, because a contextual tab arriving and taking the strip is a thing that
+        // happened to the user without the user doing it, and a driver that had to poll the tree to
+        // notice would be back to asking screen coordinates what the ribbon is doing. Only when
+        // somebody is listening: a peer built for nobody is a peer built for nothing.
+        if (IsSelected && AutomationPeer.ListenerExists(AutomationEvents.SelectionItemPatternOnElementSelected))
+        {
+            FrameworkElementAutomationPeer.FromElement(this)?.RaiseAutomationEvent(AutomationEvents.SelectionItemPatternOnElementSelected);
+        }
+    }
+
+    // No transitions, ever. A contextual tab is drawn as one from the moment it is on the strip, and
+    // an accent line fading in over a tab that has only just appeared is two arrivals for one event.
+    private void UpdateContextualState(bool useTransitions)
+    {
+        VisualStateManager.GoToState(this, IsContextual ? "Contextual" : "Fixed", useTransitions);
+    }
+
+    // What a screen reader is told this tab is called. A contextual tab says so, for the same reason
+    // a folded group does: what is worth knowing about it is not only its name but that it is here
+    // now and was not a moment ago, and that is invisible to somebody who cannot see the strip change
+    // length.
+    private void UpdateAutomationName()
+    {
+        AutomationProperties.SetName(
+            this,
+            IsContextual
+                ? string.Format(CultureInfo.CurrentCulture, RibbonStrings.ContextualTabNameFormat, Label)
+                : Label);
     }
 }

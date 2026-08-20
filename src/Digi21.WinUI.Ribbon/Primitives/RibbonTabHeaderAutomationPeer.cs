@@ -28,8 +28,17 @@ public partial class RibbonTabHeaderAutomationPeer : FrameworkElementAutomationP
     /// <inheritdoc/>
     public bool IsSelected => Header.IsSelected;
 
-    /// <inheritdoc/>
-    public IRawElementProviderSimple? SelectionContainer => null;
+    /// <summary>Gets the ribbon this tab is one of.</summary>
+    /// <remarks>
+    /// It was <see langword="null"/> to begin with, which says "this is a tab of nothing" - and a
+    /// driver reading a contextual tab has one question beyond its name, which is what set it belongs
+    /// to and what else is in it. Answering that is what the ribbon's own peer is for.
+    /// </remarks>
+    public IRawElementProviderSimple? SelectionContainer =>
+        Header.Owner is { } ribbon
+        && (FromElement(ribbon) ?? CreatePeerForElement(ribbon)) is { } peer
+            ? ProviderFromPeer(peer)
+            : null;
 
     private RibbonTabHeader Header => (RibbonTabHeader)Owner;
 
@@ -51,10 +60,10 @@ public partial class RibbonTabHeaderAutomationPeer : FrameworkElementAutomationP
         Header.Choose();
     }
 
-    /// <summary>Not supported: a ribbon always has a tab showing.</summary>
+    /// <summary>Not supported: a ribbon shows the tab that is chosen, and choosing another is how one stops being chosen.</summary>
     /// <exception cref="InvalidOperationException">Always.</exception>
     public void RemoveFromSelection() =>
-        throw new InvalidOperationException("A ribbon always shows one tab, so a tab cannot be deselected on its own.");
+        throw new InvalidOperationException("A ribbon shows the tab that is chosen, so a tab cannot be deselected on its own.");
 
     /// <inheritdoc/>
     protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.TabItem;

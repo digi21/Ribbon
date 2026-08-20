@@ -170,6 +170,22 @@
                             </Rectangle.RenderTransform>
                         </Rectangle>
 
+                        <!--
+                            The mark of a tab that comes and goes. The top edge, because the bottom
+                            one is the mark of the tab on show and a contextual tab that is also the
+                            one on show has to be able to say both things at once.
+
+                            Edge to edge rather than inset like the indicator below it: two contextual
+                            tabs side by side then draw one unbroken line, which is what a coloured
+                            heading over a set of them would be underlined by the day there is one.
+                        -->
+                        <Rectangle
+                            x:Name="ContextualAccent"
+                            Height="{ThemeResource RibbonContextualTabAccentHeight}"
+                            VerticalAlignment="Top"
+                            Fill="{ThemeResource RibbonContextualTabAccentBrush}"
+                            Opacity="0" />
+
                         <VisualStateManager.VisualStateGroups>
                             <!--
                                 Two groups that never touch the same property, so they compose: the
@@ -240,6 +256,21 @@
                                             To="1"
                                             Duration="0:0:0.1" />
                                     </Storyboard>
+                                </VisualState>
+                            </VisualStateGroup>
+
+                            <!--
+                                The third group, and it touches neither property the other two do.
+                                Setters and no storyboard on purpose: a tab that has only just
+                                appeared does not also need its mark to fade in, which would be two
+                                arrivals for one event.
+                            -->
+                            <VisualStateGroup x:Name="ContextualStates">
+                                <VisualState x:Name="Fixed" />
+                                <VisualState x:Name="Contextual">
+                                    <VisualState.Setters>
+                                        <Setter Target="ContextualAccent.Opacity" Value="1" />
+                                    </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>

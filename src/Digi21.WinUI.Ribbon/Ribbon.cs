@@ -1,14 +1,19 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using Digi21.WinUI.Ribbon.Layout;
 using Digi21.WinUI.Ribbon.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Markup;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Foundation;
 using Windows.System;
+using Windows.UI.ViewManagement;
 
 namespace Digi21.WinUI.Ribbon;
 
@@ -20,6 +25,12 @@ namespace Digi21.WinUI.Ribbon;
 /// That costs the memory of every tab from the start and buys the promise the whole library is
 /// built on - that an application which keeps a reference to a control it put in a group can go on
 /// using it, through a change of tab, through a group folding and through every relayout in between.
+/// </para>
+/// <para>
+/// A contextual tab is realized on the same terms and kept on the same terms. What
+/// <see cref="RibbonTab.IsActive"/> takes away is its header, not the tab: the groups, the items and
+/// the application's references to them all outlive it being off the strip, so a tab that comes and
+/// goes twenty times a minute costs one build and no more.
 /// </para>
 /// </remarks>
 [ContentProperty(Name = nameof(Tabs))]
@@ -77,6 +88,14 @@ public partial class Ribbon : Control
             typeof(Ribbon),
             new PropertyMetadata(false, OnIsMinimizedChanged));
 
+    /// <summary>Identifies the <see cref="TabTransition"/> dependency property.</summary>
+    public static readonly DependencyProperty TabTransitionProperty =
+        DependencyProperty.Register(
+            nameof(TabTransition),
+            typeof(RibbonTabTransition),
+            typeof(Ribbon),
+            new PropertyMetadata(RibbonTabTransition.Slide));
+
     private const string TabStripPart = "PART_TabStrip";
     private const string BodyPart = "PART_Body";
     private const string StripPart = "PART_Strip";
@@ -86,6 +105,10 @@ public partial class Ribbon : Control
     private const string OverlayPart = "PART_Overlay";
     private const string OverlayHostPart = "PART_OverlayHost";
     private const string ExpandPart = "PART_Expand";
+
+    // The way to ask Windows about animations. The object is expensive to make and cheap to ask, so
+    // there is one of it for the whole application and the question is put to it every time.
+    private static UISettings? settings;
 
     private readonly ObservableCollection<RibbonTab> tabs = [];
     private readonly List<RibbonTabHeader> headers = [];
@@ -100,6 +123,22 @@ public partial class Ribbon : Control
     private FontIcon? minimizeGlyph;
     private Popup? overlay;
     private Border? overlayHost;
+
+    // The transition being drawn, held so that a change of tab arriving on top of one still being
+    // drawn can stop it. Stopped rather than left to finish, because what it animates then goes back
+    // to what the tab was born with - in its place and opaque - which is where a tab that is not
+    // moving belongs.
+    private Storyboard? motion;
+
+    // The tab currently on show, held as the tab and not as its index. An index into a collection
+    // that changes under it is a different tab tomorrow, and the whole of the contextual machinery
+    // is about a collection that changes under it.
+    private RibbonTab? showing;
+
+    // Set while the ribbon is putting SelectedIndex back to a legal value, so that the write does not
+    // start a second pass through the same code. One place decides which tab is shown, and it is
+    // ShowSelectedTab; this is what stops it from being re-entered halfway down.
+    private bool selecting;
 
     /// <summary>Initializes a new instance of the <see cref="Ribbon"/> class.</summary>
     public Ribbon()
@@ -122,10 +161,49 @@ public partial class Ribbon : Control
     /// <summary>Occurs when the tab on show changes.</summary>
     public event TypedEventHandler<Ribbon, object>? SelectionChanged;
 
+    /// <summary>Occurs when a tab arrives on the strip, after the ribbon has decided which tab is showing.</summary>
+    /// <remarks>
+    /// <para>
+    /// Raised after the strip has been rebuilt and after any move to the new tab, so a handler asking
+    /// <see cref="SelectedTab"/> is told where the ribbon ended up rather than where it was. The
+    /// ribbon also says so in UI Automation, which is the same news for a driver that is out of
+    /// process and has no event of this kind to hang off.
+    /// </para>
+    /// </remarks>
+    public event TypedEventHandler<Ribbon, RibbonTab>? TabActivated;
+
+    /// <summary>Occurs when a tab leaves the strip, after the ribbon has decided which tab is showing instead.</summary>
+    public event TypedEventHandler<Ribbon, RibbonTab>? TabDeactivated;
+
     /// <summary>Gets the tabs, in the order they are shown.</summary>
+    /// <remarks>
+    /// <para>
+    /// The order here is the order in the strip, contextual tabs included: a tab that comes and goes
+    /// appears in the gap it left rather than being moved to the end, so that the tab an application
+    /// declared third is the third one drawn whenever it is drawn at all. Declare a contextual tab
+    /// last if it should sit on the right, as Office puts them.
+    /// </para>
+    /// <para>
+    /// <see cref="SelectedIndex"/> indexes this collection, and it indexes all of it. A tab switched
+    /// off does not shift the ones after it.
+    /// </para>
+    /// </remarks>
     public IList<RibbonTab> Tabs => tabs;
 
-    /// <summary>Gets or sets the index of the tab on show.</summary>
+    /// <summary>Gets or sets the index into <see cref="Tabs"/> of the tab on show.</summary>
+    /// <remarks>
+    /// <para>
+    /// Only a tab that is on the strip can be shown. Setting this to a tab whose
+    /// <see cref="RibbonTab.IsActive"/> is <see langword="false"/> leaves the ribbon where it was and
+    /// puts the property back, rather than throwing or showing nothing: the set of tabs on the strip
+    /// changes while an application runs, so asking for one that has just gone is a race and not a
+    /// mistake.
+    /// </para>
+    /// <para>
+    /// It reads back as <c>-1</c> only when there is no tab to show at all - a ribbon with no tabs,
+    /// or one whose every tab is contextual and none of them switched on.
+    /// </para>
+    /// </remarks>
     public int SelectedIndex
     {
         get => (int)GetValue(SelectedIndexProperty);
@@ -194,9 +272,54 @@ public partial class Ribbon : Control
         set => SetValue(IsMinimizedProperty, value);
     }
 
-    /// <summary>Gets the tab on show, or <see langword="null"/> when there are no tabs.</summary>
+    /// <summary>Gets or sets how the change from one tab to the next is drawn. Sliding, out of the box.</summary>
+    /// <remarks>
+    /// <para>
+    /// Chrome over a change that has already happened: the tab is chosen, laid out and hit-testable
+    /// before the first frame of the transition is drawn, and clicking a command while one is running
+    /// invokes it. It is a render transform and an opacity, so the layout neither sees it nor is run
+    /// again for it.
+    /// </para>
+    /// <para>
+    /// Whatever this says, the ribbon cuts when Windows has been told to show no animations. It also
+    /// cuts when a minimised ribbon opens a tab over the content, because the popup that carries it
+    /// arrives with an animation of its own and two arrivals for one click is one too many.
+    /// </para>
+    /// </remarks>
+    public RibbonTabTransition TabTransition
+    {
+        get => (RibbonTabTransition)GetValue(TabTransitionProperty);
+        set => SetValue(TabTransitionProperty, value);
+    }
+
+    /// <summary>Gets the tab on show, or <see langword="null"/> when there is no tab to show.</summary>
     public RibbonTab? SelectedTab =>
         SelectedIndex >= 0 && SelectedIndex < tabs.Count ? tabs[SelectedIndex] : null;
+
+    // The header of the tab on show, for the peer that has to hand it back as the selection.
+    internal RibbonTabHeader? SelectedHeader => headers.FirstOrDefault(header => header.IsSelected);
+
+    // Whether Windows is showing animations at all. Asked of the system rather than guessed at from
+    // the theme, and asked every time rather than cached, because a user who switches them off
+    // switches them off while the application is running and does not expect to have to restart it.
+    private static bool Animations
+    {
+        get
+        {
+            try
+            {
+                settings ??= new UISettings();
+
+                return settings.AnimationsEnabled;
+            }
+            catch (Exception)
+            {
+                // A decoration is not worth taking a window down over. Whatever went wrong here, the
+                // ribbon draws its transition and the user sees a ribbon rather than a crash.
+                return true;
+            }
+        }
+    }
 
     /// <summary>Reads the shapes an item accepts.</summary>
     /// <param name="item">The item.</param>
@@ -235,6 +358,9 @@ public partial class Ribbon : Control
     }
 
     /// <inheritdoc/>
+    protected override AutomationPeer OnCreateAutomationPeer() => new RibbonAutomationPeer(this);
+
+    /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
         // Before the template is measured, so that the tab on show is measured with the height the
@@ -261,6 +387,19 @@ public partial class Ribbon : Control
         if (minimize is not null)
         {
             minimize.Click += (_, _) => Collapse();
+        }
+
+        if (body is Panel host)
+        {
+            // A tab arriving comes from beside its place, and beside its place is outside the ribbon:
+            // without this, the first frames of it are drawn past the ribbon's own edge and over
+            // whatever the window has put there. Kept up to date rather than set once, because the
+            // body is resized by every drag of the window border and is moved into the popup whole
+            // when the ribbon is minimised.
+            host.SizeChanged += (_, arguments) => host.Clip = new RectangleGeometry
+            {
+                Rect = new Rect(0, 0, arguments.NewSize.Width, arguments.NewSize.Height),
+            };
         }
 
         if (GetTemplateChild(ExpandPart) is Button found)
@@ -294,7 +433,14 @@ public partial class Ribbon : Control
 
     private static void OnSelectedIndexChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
     {
-        ((Ribbon)ribbon).ShowSelectedTab();
+        var self = (Ribbon)ribbon;
+
+        // The write that put the property back is not a request to change tab; it is the tail of the
+        // request that is already being served.
+        if (!self.selecting)
+        {
+            self.ShowSelectedTab();
+        }
     }
 
     private void OnTabsChanged(object? sender, NotifyCollectionChangedEventArgs arguments)
@@ -319,7 +465,18 @@ public partial class Ribbon : Control
 
         foreach (RibbonTab tab in tabs)
         {
-            var header = new RibbonTabHeader { Label = tab.Label, Tab = tab };
+            // Taken here and given up below, which is what lets a tab tell the ribbon that it has
+            // been switched on or renamed. A tab nobody has added to a ribbon has nobody to tell.
+            tab.Owner = this;
+
+            var header = new RibbonTabHeader
+            {
+                Label = tab.Label,
+                IsContextual = tab.IsContextual,
+                Tab = tab,
+                Owner = this,
+            };
+
             // A click goes through the same door a driver does, rather than each having its own.
             header.Click += (sender, _) => ((RibbonTabHeader)sender).Choose();
             header.Chosen += OnHeaderChosen;
@@ -338,10 +495,15 @@ public partial class Ribbon : Control
         {
             if (body.Children[i] is RibbonTab existing && !tabs.Contains(existing))
             {
+                // Both ends of the reference, so that a tab an application takes back out of the
+                // ribbon and holds on to cannot go on driving a strip it is no longer part of.
+                existing.Owner = null;
+                existing.Restore = null;
                 body.Children.RemoveAt(i);
             }
         }
 
+        UpdateActivation();
         UpdateDisplayMode();
         ShowSelectedTab();
     }
@@ -584,9 +746,153 @@ public partial class Ribbon : Control
         }
     }
 
+    // A tab has been switched on or off. The one place that decides what that means.
+    //
+    // Everything here happens before the event is raised, so that a handler asking the ribbon what is
+    // showing is told where it ended up rather than where it was on the way.
+    internal void OnTabActivationChanged(RibbonTab tab)
+    {
+        // First, because everything below reads the strip back and a header that is still on it is a
+        // tab the ribbon would happily go on showing.
+        UpdateActivation();
+
+        if (tab.IsActive)
+        {
+            // Stepping forward is what makes a contextual tab worth having over a row of greyed-out
+            // buttons: it arrives at the moment its commands start working, and it says so by being
+            // the tab in front of you. A fixed tab shown again stays where it is put.
+            Select(tab.IsContextual && tab.SelectsWhenActivated ? tabs.IndexOf(tab) : SelectedIndex);
+
+            TabActivated?.Invoke(this, tab);
+        }
+        else
+        {
+            bool wasShowing = ReferenceEquals(tab, showing);
+
+            // Read before the move and cleared after it, so that the tab holds no reference to a tab
+            // it is no longer coming back from.
+            RibbonTab? back = tab.Restore;
+            tab.Restore = null;
+
+            // The overlay was opened over the application's content to show one tab, and that tab has
+            // gone. It closes with it rather than swapping in a tab nobody asked to see.
+            if (wasShowing && overlay is { IsOpen: true })
+            {
+                overlay.IsOpen = false;
+            }
+
+            Select(wasShowing
+                ? RibbonTabSelection.Legalize(Activity(), back is null ? -1 : tabs.IndexOf(back), -1)
+                : SelectedIndex);
+
+            TabDeactivated?.Invoke(this, tab);
+        }
+
+        // Said in UI Automation as well as in CLR, because a driver out of process has no event of
+        // the kind above to hang off, and the alternative is polling the tree for a tab that may
+        // never come.
+        AnnounceStrip();
+    }
+
+    // A tab has been renamed, or has changed from fixed to contextual. Neither touches the layout;
+    // both change what a header draws and what it is called.
+    internal void OnTabChromeChanged(RibbonTab tab)
+    {
+        foreach (RibbonTabHeader header in headers)
+        {
+            if (ReferenceEquals(header.Tab, tab))
+            {
+                header.Label = tab.Label;
+                header.IsContextual = tab.IsContextual;
+            }
+        }
+    }
+
+    // Which tabs are on the strip, in the order they are declared in, which is the order they are
+    // drawn in: a contextual tab reappears in the gap it left rather than at the end.
+    private bool[] Activity()
+    {
+        var active = new bool[tabs.Count];
+
+        for (int i = 0; i < tabs.Count; i++)
+        {
+            active[i] = tabs[i].IsActive;
+        }
+
+        return active;
+    }
+
+    // Puts the headers of the tabs that are not on the strip out of sight.
+    //
+    // Collapsed rather than hidden, and for more than the layout: a collapsed element is not in the
+    // UI Automation tree either, so a tab that is not on the strip is a tab a driver cannot find,
+    // rather than one it can find and cannot press. The header itself is kept - it is the same object
+    // when the tab comes back, as everything else in this library is.
+    private void UpdateActivation()
+    {
+        foreach (RibbonTabHeader header in headers)
+        {
+            header.Visibility = header.Tab is { IsActive: true } ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    // Asks for a tab, and makes sure the asking is followed through even when the answer is the tab
+    // that is already showing: setting a dependency property to the value it already has raises no
+    // callback, and the strip still has to be redrawn around whatever has just changed under it.
+    private void Select(int index)
+    {
+        if (SelectedIndex == index)
+        {
+            ShowSelectedTab();
+            return;
+        }
+
+        SelectedIndex = index;
+    }
+
+    private void AnnounceStrip()
+    {
+        if (!AutomationPeer.ListenerExists(AutomationEvents.StructureChanged))
+        {
+            return;
+        }
+
+        (FrameworkElementAutomationPeer.FromElement(this) ?? FrameworkElementAutomationPeer.CreatePeerForElement(this))
+            ?.RaiseAutomationEvent(AutomationEvents.StructureChanged);
+    }
+
     private void ShowSelectedTab()
     {
-        RibbonTab? selected = SelectedTab;
+        // The one gate every request for a tab goes through, whoever made it: a click, a driver, an
+        // application setting the index, or a tab going off the strip from under the user. What comes
+        // out is a tab that is actually on the strip, or nothing when there is no such tab.
+        int wanted = SelectedIndex;
+
+        // Where the ribbon is standing, read before anything moves. It is two things at once: what
+        // the ribbon falls back to when the tab asked for cannot be shown, and - further down - which
+        // side the tab arriving comes from.
+        int from = showing is null ? -1 : tabs.IndexOf(showing);
+        int allowed = RibbonTabSelection.Legalize(Activity(), wanted, from);
+
+        if (allowed != wanted)
+        {
+            // Written back rather than only acted on, so that SelectedIndex never reads as a tab the
+            // ribbon is not showing. An application reads this property.
+            selecting = true;
+            SelectedIndex = allowed;
+            selecting = false;
+        }
+
+        RibbonTab? selected = allowed >= 0 && allowed < tabs.Count ? tabs[allowed] : null;
+
+        // Where this tab was chosen from, remembered on the tab itself so that a second contextual
+        // tab arriving over the first goes back to the first rather than past it.
+        if (selected is not null && !ReferenceEquals(selected, showing))
+        {
+            selected.Restore = showing;
+        }
+
+        showing = selected;
 
         foreach (RibbonTab tab in tabs)
         {
@@ -600,6 +906,78 @@ public partial class Ribbon : Control
             header.IsSelected = ReferenceEquals(header.Tab, selected);
         }
 
+        // Last, and after the visibilities on purpose: what is drawn moving is a tab that is already
+        // there, already laid out and already answering to a click. Nothing waits for it.
+        Animate(selected, from, allowed);
+
         SelectionChanged?.Invoke(this, selected!);
+    }
+
+    // Draws the change of tab, when there is a change and anybody wants it drawn.
+    //
+    // A render transform and an opacity, neither of which the layout system can see: a width or a
+    // margin animated here would re-measure the strip sixty times a second, and the strip is where
+    // the whole ribbon decides what fits. The tab arriving is the only one that moves - the one
+    // leaving is collapsed in the same pass, as it always was - because a tab fading out is a tab
+    // still on screen, and a transition interrupted halfway would leave it there.
+    private void Animate(RibbonTab? tab, int from, int to)
+    {
+        // Whatever was being drawn belongs to a change the user has already moved past. Stopping it
+        // puts what it animates back to what the tab was born with, which is where a tab that is not
+        // moving belongs - including the tab this one is replacing, which would otherwise be left
+        // standing wherever it had got to.
+        motion?.Stop();
+        motion = null;
+
+        if (tab is null)
+        {
+            return;
+        }
+
+        // The popup a minimised ribbon opens a tab in animates itself, and this would be the second
+        // arrival for one click. A tab chosen while that popup is already open is an ordinary change
+        // of tab and is drawn like one.
+        bool opening = IsMinimized && overlay is not { IsOpen: true };
+
+        if (RibbonTabMotion.Entry(TabTransition, Animations, opening, from, to) is not double entry)
+        {
+            return;
+        }
+
+        var storyboard = new Storyboard();
+
+        var fade = new DoubleAnimation
+        {
+            From = 0,
+            To = 1,
+            Duration = RibbonTabMotion.Duration,
+        };
+
+        Storyboard.SetTarget(fade, tab);
+        Storyboard.SetTargetProperty(fade, "Opacity");
+        storyboard.Children.Add(fade);
+
+        if (entry != 0)
+        {
+            // A new transform each time rather than one reused: it is what the storyboard is stopped
+            // back to, so it has to start where a tab that is not moving stands.
+            var move = new TranslateTransform();
+            tab.RenderTransform = move;
+
+            var slide = new DoubleAnimation
+            {
+                From = entry,
+                To = 0,
+                Duration = RibbonTabMotion.Duration,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+            };
+
+            Storyboard.SetTarget(slide, move);
+            Storyboard.SetTargetProperty(slide, "X");
+            storyboard.Children.Add(slide);
+        }
+
+        motion = storyboard;
+        storyboard.Begin();
     }
 }
