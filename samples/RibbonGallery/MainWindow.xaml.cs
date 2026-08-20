@@ -65,6 +65,15 @@ public sealed partial class MainWindow : Window
         Ribbon.IsMinimized = !Ribbon.IsMinimized;
     }
 
+    private void OnSimplified(object sender, RoutedEventArgs arguments)
+    {
+        // Office's simplified ribbon: one row, no group names, and whatever cannot be drawn in a row
+        // - the size box with its label, here - as the button its group folds into. The controls are
+        // the same objects on the way there and on the way back; the switch below still writes to
+        // them.
+        Ribbon.DisplayMode = Simplified.IsOn ? RibbonDisplayMode.Simplified : RibbonDisplayMode.Full;
+    }
+
     private void OnRename(object sender, RoutedEventArgs arguments)
     {
         renames++;

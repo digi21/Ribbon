@@ -22,6 +22,15 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
 - `RibbonGroup.HasLauncher`, `LauncherFlyout` and `LauncherClick`: the small button beside a group's
   name that opens whatever the group has no room for. Off out of the box, and it goes with the name
   when the group folds - a folded group draws its button and nothing else.
+- `Ribbon.DisplayMode` and `RibbonDisplayMode`: `Full`, three rows to a group as in Office, and
+  `Simplified`, the whole strip in one row with the group names off and every item beside its label
+  or down to its icon. It is the same walk through the same states with one row instead of three and
+  the tallest shape never offered, so what does not fit folds into the group's button as it always
+  did rather than into a second overflow mechanism. A group holding something that cannot be drawn
+  in one row - a stack of labelled controls, or an item accepting no shape below `Large` - is its
+  button at every width, and is laid out inside the flyout the way a full ribbon would lay it out.
+  Independent of `IsMinimized`, and nothing is rebuilt on the way: the control an application put in
+  a group is the same object in both modes.
 - `Ribbon.IsMinimized`, with a chevron in the tab strip, a double-click on a tab and `Ctrl+F1`.
   Minimised, the ribbon leaves only its tabs and gives the room back to the window; clicking a tab
   then opens it *over* the content, transiently, without changing the property — so an application

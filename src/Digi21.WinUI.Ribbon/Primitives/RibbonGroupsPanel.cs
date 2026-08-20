@@ -31,7 +31,17 @@ public sealed partial class RibbonGroupsPanel : Panel
             metrics[i] = groups[i].CollectMetrics();
         }
 
-        RibbonLayout layout = RibbonLayoutSolver.Solve(metrics, availableSize.Width);
+        // Every group of a tab is laid out in the same number of rows, so the first of them speaks
+        // for the strip. One row cannot hold an item drawn with its icon above its label, so the
+        // walk starts a shape lower rather than spending its first states offering one.
+        int rows = groups[0].Rows;
+        RibbonItemSize largest = rows > 1 ? RibbonItemSize.Large : RibbonItemSize.Normal;
+
+        RibbonLayout layout = RibbonLayoutSolver.Solve(
+            metrics,
+            availableSize.Width,
+            rows,
+            largest: largest);
 
         double width = (groups.Count - 1) * RibbonLayoutSolver.GroupSpacing;
         double height = 0;

@@ -45,13 +45,14 @@ internal static class RibbonLayoutSolver
         double available,
         int maxRows = MaxRows,
         double columnSpacing = ColumnSpacing,
-        double groupSpacing = GroupSpacing)
+        double groupSpacing = GroupSpacing,
+        RibbonItemSize largest = RibbonItemSize.Large)
     {
         ArgumentNullException.ThrowIfNull(groups);
 
         RibbonGroupArrangement[] terminal = [];
 
-        foreach (RibbonGroupArrangement[] state in States(groups, maxRows, columnSpacing))
+        foreach (RibbonGroupArrangement[] state in States(groups, maxRows, columnSpacing, largest))
         {
             terminal = state;
 
@@ -77,13 +78,24 @@ internal static class RibbonLayoutSolver
     internal static IEnumerable<RibbonGroupArrangement[]> States(
         IReadOnlyList<RibbonGroupMetrics> groups,
         int maxRows = MaxRows,
-        double columnSpacing = ColumnSpacing)
+        double columnSpacing = ColumnSpacing,
+        RibbonItemSize largest = RibbonItemSize.Large)
     {
-        // Every group starts as wide as it wants to be, and the walk only ever takes width away.
+        // Every group starts as wide as it wants to be, and the walk only ever takes width away. The
+        // widest shape is a parameter because a ribbon of one row has no room for the tallest of
+        // them: there, the walk starts one shape down rather than spending its first states taking
+        // away something that was never on offer.
         var caps = new RibbonItemSize[groups.Count];
-        Array.Fill(caps, RibbonItemSize.Large);
+        Array.Fill(caps, largest);
 
+        // A group that cannot be drawn in the rows there are starts folded and stays folded. It is
+        // the one thing here that is not a degradation: no width brings it back, because no width
+        // was ever the reason.
         var collapsed = new bool[groups.Count];
+        for (int i = 0; i < groups.Count; i++)
+        {
+            collapsed[i] = groups[i].MustCollapse;
+        }
 
         var labelled = new bool[groups.Count];
         Array.Fill(labelled, true);

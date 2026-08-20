@@ -218,6 +218,12 @@
                         <x:String>Dark</x:String>
                     </ComboBox>
                     <Button x:Name="MinimizeButton" Click="OnMinimize" />
+                    <ToggleSwitch
+                        x:Name="Simplified"
+                        Header=""
+                        OffContent="Full ribbon"
+                        OnContent="Simplified"
+                        Toggled="OnSimplified" />
                 </StackPanel>
 
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="One instance per item" />

@@ -367,6 +367,79 @@ public class RibbonLayoutSolverTests
 
     // Three groups of five buttons each, in the order they would be declared, with the priorities
     // given. The default set is the usual one: the leftmost group is the most expendable.
+    // The simplified ribbon: one row, and the shapes that need more than one never offered.
+    [Fact]
+    public void InOneRow_NothingIsEverDrawnLarge()
+    {
+        // Five buttons in a row rather than two columns of three, so the group is wider at Normal
+        // than the same group is in a full ribbon - and there is no state above Normal to walk
+        // down from, because an icon above a label is three rows of anybody's ribbon.
+        RibbonLayout layout = RibbonLayoutSolver.Solve(
+            Strip(),
+            double.PositiveInfinity,
+            maxRows: 1,
+            largest: RibbonItemSize.Normal);
+
+        Assert.All(layout.Groups, group =>
+        {
+            Assert.False(group.IsCollapsed);
+            Assert.All(group.ItemSizes, size => Assert.Equal(RibbonItemSize.Normal, size));
+        });
+
+        Assert.Equal(3 * ((5 * 72) + (4 * RibbonLayoutSolver.ColumnSpacing) + Chrome) + (2 * RibbonLayoutSolver.GroupSpacing), layout.Width);
+    }
+
+    [Fact]
+    public void InOneRow_ItStillGivesWayInTheSameOrder()
+    {
+        RibbonGroupMetrics[] strip = Strip();
+
+        double widest = RibbonLayoutSolver.Solve(strip, double.PositiveInfinity, maxRows: 1, largest: RibbonItemSize.Normal).Width;
+        RibbonLayout layout = RibbonLayoutSolver.Solve(strip, widest - 1, maxRows: 1, largest: RibbonItemSize.Normal);
+
+        Assert.Equal(RibbonItemSize.Small, layout.Groups[0].ItemSizes[0]);
+        Assert.Equal(RibbonItemSize.Normal, layout.Groups[1].ItemSizes[0]);
+        Assert.Equal(RibbonItemSize.Normal, layout.Groups[2].ItemSizes[0]);
+    }
+
+    [Fact]
+    public void AGroupThatCannotBeDrawnInTheRowsThereAre_IsItsButtonAtEveryWidth()
+    {
+        RibbonGroupMetrics[] strip = [Group(0), Group(10) with { MustCollapse = true }, Group(20)];
+
+        // Widest first: no amount of room brings it back, because room was never the reason.
+        RibbonLayout wide = RibbonLayoutSolver.Solve(strip, double.PositiveInfinity, maxRows: 1, largest: RibbonItemSize.Normal);
+
+        Assert.False(wide.Groups[0].IsCollapsed);
+        Assert.True(wide.Groups[1].IsCollapsed);
+        Assert.False(wide.Groups[2].IsCollapsed);
+
+        // And the items of a folded group report the shapes they will have in the flyout, which has
+        // all the room it wants - so what is drawn there is what a full ribbon would have drawn.
+        Assert.All(wide.Groups[1].ItemSizes, size => Assert.Equal(RibbonItemSize.Large, size));
+
+        // Narrow, it is still the one folded group and the others give way around it.
+        RibbonLayout narrow = RibbonLayoutSolver.Solve(strip, 300, maxRows: 1, largest: RibbonItemSize.Normal);
+
+        Assert.True(narrow.Groups[1].IsCollapsed);
+    }
+
+    [Fact]
+    public void AStripOfNothingButGroupsThatCannotBeDrawn_IsAStripOfButtons()
+    {
+        RibbonGroupMetrics[] strip =
+        [
+            Group(0) with { MustCollapse = true },
+            Group(10) with { MustCollapse = true },
+        ];
+
+        RibbonLayout layout = RibbonLayoutSolver.Solve(strip, double.PositiveInfinity, maxRows: 1, largest: RibbonItemSize.Normal);
+
+        Assert.All(layout.Groups, group => Assert.True(group.IsCollapsed));
+        Assert.Equal((2 * CollapsedWidth) + RibbonLayoutSolver.GroupSpacing, layout.Width);
+        Assert.False(layout.Overflows);
+    }
+
     private static RibbonGroupMetrics[] Strip(int first = 0, int second = 10, int third = 20) =>
     [
         Group(first),

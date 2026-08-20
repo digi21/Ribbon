@@ -21,6 +21,7 @@ public partial class RibbonTab : Control
     private readonly ObservableCollection<RibbonGroup> groups = [];
 
     private RibbonGroupsPanel? panel;
+    private int rows = RibbonMetrics.MaxRows;
 
     /// <summary>Initializes a new instance of the <see cref="RibbonTab"/> class.</summary>
     public RibbonTab()
@@ -40,6 +41,24 @@ public partial class RibbonTab : Control
     /// <summary>Gets the groups of this tab, left to right.</summary>
     /// <remarks>The order here is the order on screen; which of them gives way first is <see cref="RibbonGroup.Priority"/>, not this.</remarks>
     public IList<RibbonGroup> Groups => groups;
+
+    // The rows the groups of this tab are laid out in, handed down from the ribbon and handed on to
+    // the groups. Down a chain rather than read back up one, because a minimised ribbon moves its
+    // body into a popup and a group reading its way up to the ribbon would find the popup instead.
+    internal int Rows
+    {
+        get => rows;
+
+        set
+        {
+            rows = value;
+
+            foreach (RibbonGroup group in groups)
+            {
+                group.Rows = value;
+            }
+        }
+    }
 
     /// <inheritdoc/>
     protected override void OnApplyTemplate()
@@ -72,6 +91,10 @@ public partial class RibbonTab : Control
 
         foreach (RibbonGroup group in groups)
         {
+            // Here as well as in the setter, so that a group added to a tab later is laid out in the
+            // rows the ribbon is in rather than in the three it was born assuming.
+            group.Rows = rows;
+
             if (!panel.Children.Contains(group))
             {
                 panel.Children.Add(group);

@@ -265,7 +265,9 @@
                                 names to the bottom, where they line up.
                             -->
                             <RowDefinition Height="*" />
-                            <RowDefinition Height="16" />
+                            <!-- Named, because a ribbon of one row has no name under a group and no
+                                 sixteen pixels held for one either. -->
+                            <RowDefinition x:Name="PART_LabelRow" Height="16" />
                         </Grid.RowDefinitions>
 
                         <Border x:Name="PART_ItemsHost">

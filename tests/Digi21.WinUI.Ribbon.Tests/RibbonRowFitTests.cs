@@ -18,14 +18,14 @@ public class RibbonRowFitTests
     [Fact]
     public void AGroupOfButtons_KeepsTheRibbonsOwnRowHeight()
     {
-        Assert.Equal(24, RibbonRowFit.RowHeight([24, 24, 24]));
+        Assert.Equal(24, RibbonRowFit.RowHeight([24, 24, 24], MaxRows));
     }
 
     [Fact]
     public void AGroupHoldingATallerControl_GetsTallerRows()
     {
         // A WinUI control is thirty-two, and one with a name beside it thirty-three.
-        Assert.Equal(33, RibbonRowFit.RowHeight([24, 33, 24]));
+        Assert.Equal(33, RibbonRowFit.RowHeight([24, 33, 24], MaxRows));
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class RibbonRowFitTests
         // The whole point. The hundred-pixel stack is going to span rows, so it has no business
         // making each of them a hundred pixels tall on the way past. It does get a third of itself,
         // because three rows of thirty-three would leave a pixel of it outside the group.
-        Assert.Equal(100d / 3, RibbonRowFit.RowHeight([33, 100]), 6);
+        Assert.Equal(100d / 3, RibbonRowFit.RowHeight([33, 100], MaxRows), 6);
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class RibbonRowFitTests
     {
         // Three rows of thirty-three hold a ninety-pixel stack with room over, so there is nothing
         // to raise: the tall item is paid for out of the height the controls beside it already need.
-        Assert.Equal(33, RibbonRowFit.RowHeight([33, 90]));
+        Assert.Equal(33, RibbonRowFit.RowHeight([33, 90], MaxRows));
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class RibbonRowFitTests
         // No control here says how tall a row is, so the rows are worth whatever it takes for three
         // of them to hold the tallest item - and the group is the height of that item, once, rather
         // than three times it and rather than two thirds of it.
-        Assert.Equal(40, RibbonRowFit.RowHeight([100, 120]));
+        Assert.Equal(40, RibbonRowFit.RowHeight([100, 120], MaxRows));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class RibbonRowFitTests
 
         foreach (double[] heights in groups)
         {
-            double row = RibbonRowFit.RowHeight(heights);
+            double row = RibbonRowFit.RowHeight(heights, MaxRows);
 
             foreach (double height in heights)
             {
@@ -83,12 +83,26 @@ public class RibbonRowFitTests
     }
 
     [Fact]
+    public void ARibbonOfOneRow_IsAskedTheSameQuestion()
+    {
+        // And gives a bigger answer, because one row asked to hold a hundred-pixel stack is a
+        // hundred pixels tall. That is why a group holding one is folded in a simplified ribbon
+        // rather than laid out inline - the rule is not wrong here, it is being asked something a
+        // single row cannot do anything sensible with.
+        Assert.Equal(100, RibbonRowFit.RowHeight([24, 100], maxRows: 1));
+
+        // What does fit a row still decides how tall the row is, which is what a simplified ribbon
+        // is laid out from.
+        Assert.Equal(33, RibbonRowFit.RowHeight([24, 33], maxRows: 1));
+    }
+
+    [Fact]
     public void TheOrderTheItemsCameIn_DoesNotChangeTheAnswer()
     {
         // Which rows a spanning item takes is settled against the single-row items rather than
         // against the running total, so that a group is the same height however it is listed.
-        Assert.Equal(RibbonRowFit.RowHeight([33, 100, 120]), RibbonRowFit.RowHeight([120, 100, 33]), 6);
-        Assert.Equal(RibbonRowFit.RowHeight([100, 33]), RibbonRowFit.RowHeight([33, 100]), 6);
+        Assert.Equal(RibbonRowFit.RowHeight([33, 100, 120], MaxRows), RibbonRowFit.RowHeight([120, 100, 33], MaxRows), 6);
+        Assert.Equal(RibbonRowFit.RowHeight([100, 33], MaxRows), RibbonRowFit.RowHeight([33, 100], MaxRows), 6);
     }
 
     [Fact]
@@ -119,11 +133,11 @@ public class RibbonRowFitTests
         // A WinUI ToggleSwitch is forty pixels tall, and while the bound sat above that, one of them
         // in a tab made every row of every group forty - a hundred and forty-eight pixels of ribbon
         // for one switch, with eighty of nothing underneath it. It spans two ordinary rows instead.
-        Assert.Equal(24, RibbonRowFit.RowHeight([40]));
+        Assert.Equal(24, RibbonRowFit.RowHeight([40], MaxRows));
         Assert.Equal(2, RibbonRowFit.Rows(40, rowHeight: 24, MaxRows));
 
         // And beside controls that do set the height of a row, it still does not raise them.
-        Assert.Equal(33, RibbonRowFit.RowHeight([33, 40]));
+        Assert.Equal(33, RibbonRowFit.RowHeight([33, 40], MaxRows));
     }
 
     [Fact]
@@ -131,10 +145,10 @@ public class RibbonRowFitTests
     {
         // The one number in here that draws a distinction rather than measuring one, so it is worth
         // pinning where it sits: a standard control counts as a row, two of them stacked do not.
-        Assert.Equal(34, RibbonRowFit.RowHeight([34]));
+        Assert.Equal(34, RibbonRowFit.RowHeight([34], MaxRows));
 
         // Two of them stacked are not a row: they take rows of their own, and three ordinary rows
         // already hold them, so the row height does not move.
-        Assert.Equal(24, RibbonRowFit.RowHeight([68]));
+        Assert.Equal(24, RibbonRowFit.RowHeight([68], MaxRows));
     }
 }

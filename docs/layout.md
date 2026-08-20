@@ -55,6 +55,30 @@ first and last box cut off.
 Nothing scrolls and nothing is hidden vertically: an item four hundred pixels tall makes a ribbon
 four hundred pixels tall. The height of a ribbon is what its groups put in it.
 
+## One row
+
+`DisplayMode="Simplified"` is Office's simplified ribbon: the whole strip in a single row.
+
+```xml
+<ribbon:Ribbon DisplayMode="Simplified" />
+```
+
+It is not a second layout. It is the same walk through the same arrangements with one row instead of
+three, and with `Large` — an icon above a label, three rows of anybody's ribbon — never offered, so
+the walk starts at `Normal` and goes down from there. What does not fit folds into the group's button
+exactly as it does in a full ribbon squeezed hard; there is no separate overflow to learn, and
+nothing leaves the strip in this mode either.
+
+Two things change besides the row count. A group draws no name under it, because there is no room for
+one and Office draws none, which also means no launcher; the name is still there on the button the
+group folds into. And a group holding something that cannot be drawn in one row — a stack of labelled
+controls, or an item that accepts no shape smaller than `Large` — is drawn as its button at every
+width. Inside the flyout that button opens, the group has all the room it wants and is laid out the
+way a full ribbon would lay it out, so asking for one row costs nothing but the row.
+
+The mode is independent of `IsMinimized`, and switching it rebuilds nothing: a control an application
+put in a group is the same object in both modes, with its focus and its bindings intact.
+
 ## Giving way
 
 Each group has a **cap** — `Large`, `Normal` or `Small` — and each of its items takes the largest

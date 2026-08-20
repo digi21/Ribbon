@@ -31,11 +31,14 @@ internal static class RibbonRowFit
     // does with one and what this bound now says.
     internal const double SingleRowCeiling = 36;
 
-    // The height of a row, given what has to sit in one. The floor is the ribbon's own item height; a
-    // group holding taller controls gets taller rows; and a group holding something taller than a row
-    // gets rows that between them are as tall as that item - a third of a hundred-pixel stack per
-    // row rather than the whole of it.
-    internal static double RowHeight(IReadOnlyList<double> heights)
+    // The height of a row, given what has to sit in one and how many rows there are to spread it
+    // over. The floor is the ribbon's own item height; a group holding taller controls gets taller
+    // rows; and a group holding something taller than a row gets rows that between them are as tall
+    // as that item - a third of a hundred-pixel stack per row rather than the whole of it.
+    //
+    // A ribbon of one row is asked the same question and gives a bigger answer, which is why a group
+    // holding something that does not fit a row is folded in that mode rather than laid out here.
+    internal static double RowHeight(IReadOnlyList<double> heights, int maxRows)
     {
         double row = Primitives.RibbonMetrics.RowHeight;
 
@@ -57,7 +60,7 @@ internal static class RibbonRowFit
         {
             if (height > SingleRowCeiling)
             {
-                row = Math.Max(row, height / Rows(height, single, Primitives.RibbonMetrics.MaxRows));
+                row = Math.Max(row, height / Rows(height, single, maxRows));
             }
         }
 

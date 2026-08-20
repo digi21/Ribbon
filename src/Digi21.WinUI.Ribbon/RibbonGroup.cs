@@ -57,6 +57,7 @@ public partial class RibbonGroup : Control
     public static readonly DependencyProperty LauncherFlyoutProperty =
         DependencyProperty.Register(nameof(LauncherFlyout), typeof(FlyoutBase), typeof(RibbonGroup), new PropertyMetadata(null, OnChromeChanged));
 
+    private const string LabelRowPart = "PART_LabelRow";
     private const string ItemsHostPart = "PART_ItemsHost";
     private const string ItemsPart = "PART_Items";
     private const string LabelPart = "PART_Label";
@@ -67,6 +68,7 @@ public partial class RibbonGroup : Control
     private readonly ObservableCollection<UIElement> items = [];
     private readonly Border flyoutHost = new();
 
+    private RowDefinition? labelRow;
     private Border? itemsHost;
     private RibbonItemsPanel? itemsPanel;
     private TextBlock? labelText;
@@ -90,6 +92,15 @@ public partial class RibbonGroup : Control
     // into, one control along - and it showed as a folded button drawn with its name in a window
     // dragged narrow and without it in a window opened narrow, at the same width.
     private double nameWidth;
+
+    // How many rows this group is laid out in: three in a full ribbon, one in a simplified one.
+    // Written by the tab, which is told by the ribbon.
+    private int rows = RibbonMetrics.MaxRows;
+
+    // Whether the items, as they measured, hold something that cannot be drawn in a single row.
+    // Cached alongside them and for the same reason: a folded group's items are in a closed flyout
+    // and measure as nothing, so a group asked afresh would say it fits a row and unfold into one.
+    private bool needsRoom;
 
     /// <summary>Occurs when the launcher is pressed, for a group that opens a dialog rather than a flyout.</summary>
     public event TypedEventHandler<RibbonGroup, RoutedEventArgs>? LauncherClick;
@@ -151,6 +162,33 @@ public partial class RibbonGroup : Control
         set => SetValue(LauncherFlyoutProperty, value);
     }
 
+    // The rows this group has to lay itself out in. Setting it moves the chrome with it: a group in a
+    // one-row ribbon has no name under it - there is no room for one and Office does not draw one -
+    // and the button it folds into is drawn beside its icon rather than under it.
+    internal int Rows
+    {
+        get => rows;
+
+        set
+        {
+            if (rows == value)
+            {
+                return;
+            }
+
+            rows = value;
+            measured = null;
+
+            UpdateChrome();
+            Fold(IsCollapsed, showsCollapsedLabel);
+            InvalidateMeasure();
+        }
+    }
+
+    // Whether the group draws its own name under it, which is also the question of whether it has
+    // the height to. One row has no room for a name and Office's simplified ribbon draws none.
+    private bool ShowsName => rows > 1;
+
     /// <summary>Gets the items of this group, left to right and then top to bottom within a column.</summary>
     /// <remarks>Any element at all: the ribbon's own item types, or a control of your own, which is laid out as <see cref="RibbonItemSize.Normal"/> and keeps its focus.</remarks>
     public IList<UIElement> Items => items;
@@ -160,6 +198,7 @@ public partial class RibbonGroup : Control
     {
         base.OnApplyTemplate();
 
+        labelRow = GetTemplateChild(LabelRowPart) as RowDefinition;
         itemsHost = GetTemplateChild(ItemsHostPart) as Border;
         itemsPanel = GetTemplateChild(ItemsPart) as RibbonItemsPanel;
         labelText = GetTemplateChild(LabelPart) as TextBlock;
@@ -208,25 +247,34 @@ public partial class RibbonGroup : Control
             nameWidth = labelText.DesiredSize.Width;
         }
 
-        double labelWidth = nameWidth;
+        // A one-row ribbon draws no name under a group, so the name is no floor under its width
+        // either. Reading it anyway would have every group in a simplified strip as wide as its own
+        // name for nothing.
+        double labelWidth = ShowsName ? nameWidth : 0;
 
         // The launcher sits beside the name, so it widens the floor the name puts under the group
         // rather than being paid for somewhere else. Leaving it out of the sum would have the layout
         // predict a group narrower than the group draws - which is the fault the name floor was
         // introduced to fix, and it would be back the moment a group switched its launcher on.
-        if (HasLauncher)
+        if (HasLauncher && ShowsName)
         {
             labelWidth += RibbonMetrics.LauncherSize;
         }
 
         const double chrome = 2 * RibbonMetrics.GroupPadding;
 
-        // The folded button draws exactly like a Large item, so its width comes out of the same
-        // numbers rather than a guess that would drift away from what it actually renders.
-        double iconOnly = RibbonMetrics.LargeIconSize + (2 * RibbonMetrics.ItemPadding) + chrome;
-        double withLabel = Math.Max(RibbonMetrics.LargeIconSize, labelWidth) + (2 * RibbonMetrics.ItemPadding) + chrome;
+        // The folded button draws exactly like an item, so its width comes out of the same numbers
+        // rather than a guess that would drift away from what it actually renders - Large in a full
+        // ribbon, with the name under the icon, and Normal in a one-row one, with the name beside it.
+        double icon = ShowsName ? RibbonMetrics.LargeIconSize : RibbonMetrics.SmallIconSize;
+        double name = nameWidth;
 
-        return new RibbonGroupMetrics(Priority, chrome, labelWidth, withLabel, iconOnly, measured);
+        double iconOnly = icon + (2 * RibbonMetrics.ItemPadding) + chrome;
+        double withLabel = ShowsName
+            ? Math.Max(icon, name) + (2 * RibbonMetrics.ItemPadding) + chrome
+            : icon + RibbonMetrics.IconLabelGap + name + (2 * RibbonMetrics.ItemPadding) + chrome;
+
+        return new RibbonGroupMetrics(Priority, chrome, labelWidth, withLabel, iconOnly, measured, needsRoom && rows == 1);
     }
 
     // Applies what the layout decided: the shape of every item, and whether the group is folded.
@@ -277,9 +325,11 @@ public partial class RibbonGroup : Control
 
         // The same rule the panel places by, so that what the layout decides and what the group draws
         // cannot come apart.
-        double rowHeight = RibbonRowFit.RowHeight(heights);
+        double rowHeight = RibbonRowFit.RowHeight(heights, rows);
 
         var metrics = new RibbonItemMetrics[items.Count];
+        needsRoom = false;
+
         for (int i = 0; i < items.Count; i++)
         {
             metrics[i] = new RibbonItemMetrics(
@@ -288,7 +338,17 @@ public partial class RibbonGroup : Control
                 widths[i].Normal,
                 widths[i].Large,
                 items[i] is RibbonSeparator,
-                RibbonRowFit.Rows(heights[i], rowHeight, RibbonMetrics.MaxRows));
+                RibbonRowFit.Rows(heights[i], rowHeight, rows));
+
+            // Against the same bound that decides who sets the height of a row rather than against
+            // the row itself, which in a ribbon of one row would be as tall as whatever it was
+            // asked to hold and would therefore say that everything fits.
+            //
+            // Two ways of not fitting a row: being taller than one, and accepting no shape but
+            // Large, which is an icon above a label and three rows of anybody's ribbon. Either is
+            // what makes a group draw itself as its button in a one-row ribbon.
+            needsRoom |= heights[i] > RibbonRowFit.SingleRowCeiling
+                || metrics[i].SizeUnder(RibbonItemSize.Normal) == RibbonItemSize.Large;
         }
 
         return metrics;
@@ -326,9 +386,17 @@ public partial class RibbonGroup : Control
         itemsHost.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
         collapsedButton.Visibility = collapsed ? Visibility.Visible : Visibility.Collapsed;
 
+        // The strip under the group, with its name in it, and the row that holds it. A ribbon of one
+        // row has neither: no name, no launcher, and no sixteen pixels held for them under every
+        // group on the strip.
+        if (labelRow is not null)
+        {
+            labelRow.Height = new GridLength(ShowsName ? RibbonMetrics.GroupLabelHeight : 0);
+        }
+
         if (labelText is not null)
         {
-            labelText.Visibility = collapsed ? Visibility.Collapsed : Visibility.Visible;
+            labelText.Visibility = collapsed || !ShowsName ? Visibility.Collapsed : Visibility.Visible;
         }
 
         // The launcher goes with the name it stands beside. It sits in the same panel, which is
@@ -337,8 +405,12 @@ public partial class RibbonGroup : Control
         // whose commands are all behind the flyout underneath it.
         if (launcher is not null)
         {
-            launcher.Visibility = !collapsed && HasLauncher ? Visibility.Visible : Visibility.Collapsed;
+            launcher.Visibility = !collapsed && HasLauncher && ShowsName ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        // Inside the flyout the group has all the room it wants, so it is laid out there the way a
+        // full ribbon would lay it out however few rows the strip itself has.
+        itemsPanel.Rows = collapsed ? RibbonMetrics.MaxRows : rows;
 
         if (collapsed && !ReferenceEquals(flyoutHost.Child, itemsPanel))
         {
@@ -401,11 +473,16 @@ public partial class RibbonGroup : Control
             labelText.Text = Label;
         }
 
+        if (itemsPanel is not null)
+        {
+            itemsPanel.Rows = IsCollapsed ? RibbonMetrics.MaxRows : rows;
+        }
+
         if (collapsedContent is not null)
         {
             collapsedContent.Label = Label;
             collapsedContent.IconSource = IconSource;
-            collapsedContent.ItemSize = RibbonItemSize.Large;
+            collapsedContent.ItemSize = ShowsName ? RibbonItemSize.Large : RibbonItemSize.Normal;
         }
 
         if (collapsedButton is not null)

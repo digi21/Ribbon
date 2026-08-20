@@ -55,6 +55,13 @@ what the library is measured against:
   than by screen coordinates.
 - **Light and dark**, following the system, built on the WinUI theme resources, with monochrome icons
   tinted from the foreground so they stay visible in both.
+- **One row, as in Office**: `DisplayMode="Simplified"` lays the whole strip out in a single row,
+  with the group names off and every item beside its label or down to its icon. What does not fit
+  folds into the group's button exactly as it does in a full ribbon squeezed hard - there is no
+  second overflow mechanism to learn - and a group holding something that cannot be drawn in one
+  row is its button at every width, with everything it holds laid out in the flyout the way a full
+  ribbon would. It is independent of minimizing, and the controls in a group are the same objects
+  before and after the switch.
 - **Keyboard**: Tab and the arrow keys move between tabs and items, Esc closes a drop-down.
 - **Correct at 100 %, 125 %, 150 % and 200 %.**
 - **The consumer supplies the text, already translated.** The library does not translate ribbon
@@ -135,7 +142,6 @@ The architecture is meant not to rule them out, but none of these is being built
 - Keytips.
 - A backstage or File menu.
 - Contextual tabs.
-- The simplified, single-row mode.
 - User customization of the ribbon.
 
 ## Sample

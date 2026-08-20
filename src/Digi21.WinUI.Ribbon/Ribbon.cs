@@ -53,6 +53,14 @@ public partial class Ribbon : Control
             typeof(Ribbon),
             new PropertyMetadata(RibbonItemSize.Normal));
 
+    /// <summary>Identifies the <see cref="DisplayMode"/> dependency property.</summary>
+    public static readonly DependencyProperty DisplayModeProperty =
+        DependencyProperty.Register(
+            nameof(DisplayMode),
+            typeof(RibbonDisplayMode),
+            typeof(Ribbon),
+            new PropertyMetadata(RibbonDisplayMode.Full, OnDisplayModeChanged));
+
     /// <summary>Identifies the <see cref="IsMinimized"/> dependency property.</summary>
     public static readonly DependencyProperty IsMinimizedProperty =
         DependencyProperty.Register(
@@ -114,6 +122,27 @@ public partial class Ribbon : Control
     {
         get => (int)GetValue(SelectedIndexProperty);
         set => SetValue(SelectedIndexProperty, value);
+    }
+
+    /// <summary>Gets or sets how much of itself the ribbon draws: three rows to a group, or one.</summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="RibbonDisplayMode.Simplified"/> is Office's simplified ribbon: one row, no group
+    /// names, and every item beside its label or down to its icon. What does not fit folds into the
+    /// group's button exactly as it does in a full ribbon squeezed hard, and a group holding
+    /// something that cannot be drawn in one row is its button at every width - with everything it
+    /// holds laid out in the flyout the way a full ribbon would lay it out.
+    /// </para>
+    /// <para>
+    /// Independent of <see cref="IsMinimized"/>, which is about whether the ribbon is on show at
+    /// all. Both are ordinary two-way properties, so an application can save what the user chose
+    /// and put it back on the next run.
+    /// </para>
+    /// </remarks>
+    public RibbonDisplayMode DisplayMode
+    {
+        get => (RibbonDisplayMode)GetValue(DisplayModeProperty);
+        set => SetValue(DisplayModeProperty, value);
     }
 
     /// <summary>Gets or sets a value indicating whether the ribbon is put away, leaving only its tabs.</summary>
@@ -274,12 +303,31 @@ public partial class Ribbon : Control
             }
         }
 
+        UpdateDisplayMode();
         ShowSelectedTab();
     }
 
     private static void OnIsMinimizedChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
     {
         ((Ribbon)ribbon).UpdateMinimizedState();
+    }
+
+    private static void OnDisplayModeChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
+    {
+        ((Ribbon)ribbon).UpdateDisplayMode();
+    }
+
+    // Hands the row count down to the tabs, which hand it on to their groups. Nothing is rebuilt on
+    // the way: the mode changes what the strip is laid out in, and an application that put a control
+    // in a group is holding the same control afterwards.
+    private void UpdateDisplayMode()
+    {
+        int rows = DisplayMode == RibbonDisplayMode.Simplified ? 1 : RibbonMetrics.MaxRows;
+
+        foreach (RibbonTab tab in tabs)
+        {
+            tab.Rows = rows;
+        }
     }
 
     private void OnHeaderChosen(object? sender, EventArgs arguments)

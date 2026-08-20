@@ -25,6 +25,29 @@ public sealed partial class RibbonItemsPanel : Panel
     private int[] rows = [];
     private double[] columnWidths = [];
     private double rowHeight = RibbonMetrics.RowHeight;
+    private int maxRows = RibbonMetrics.MaxRows;
+
+    /// <summary>Gets or sets how many rows a column of this group has. Written by the group.</summary>
+    /// <remarks>
+    /// Three in a full ribbon and one in a simplified one - and three again while the panel is
+    /// inside a folded group's flyout, which has all the room it wants and lays the group out the
+    /// way a full ribbon would.
+    /// </remarks>
+    internal int Rows
+    {
+        get => maxRows;
+
+        set
+        {
+            if (maxRows == value)
+            {
+                return;
+            }
+
+            maxRows = value;
+            InvalidateMeasure();
+        }
+    }
 
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
@@ -37,7 +60,7 @@ public sealed partial class RibbonItemsPanel : Panel
             rows = [];
             columnWidths = [];
             rowHeight = RibbonMetrics.RowHeight;
-            return new Size(0, RibbonMetrics.MaxRows * RibbonMetrics.RowHeight);
+            return new Size(0, maxRows * RibbonMetrics.RowHeight);
         }
 
         rows = new int[count];
@@ -66,18 +89,18 @@ public sealed partial class RibbonItemsPanel : Panel
             heights[i] = child.DesiredSize.Height;
         }
 
-        rowHeight = RibbonRowFit.RowHeight(heights);
+        rowHeight = RibbonRowFit.RowHeight(heights, maxRows);
 
         for (int i = 0; i < count; i++)
         {
             rows[i] = Spans(Children[i])
-                ? RibbonMetrics.MaxRows
-                : RibbonRowFit.Rows(heights[i], rowHeight, RibbonMetrics.MaxRows);
+                ? maxRows
+                : RibbonRowFit.Rows(heights[i], rowHeight, maxRows);
         }
 
-        double height = RibbonMetrics.MaxRows * rowHeight;
+        double height = maxRows * rowHeight;
 
-        placement = RibbonColumnPacker.Pack(rows, RibbonMetrics.MaxRows, out int columns);
+        placement = RibbonColumnPacker.Pack(rows, maxRows, out int columns);
 
         columnWidths = new double[columns];
         for (int i = 0; i < count; i++)
@@ -114,7 +137,7 @@ public sealed partial class RibbonItemsPanel : Panel
 
         // Stretched to the height the strip settled on, so that the rows of every group line up
         // however tall the tallest item of any one of them turned out to be.
-        double row = Math.Max(rowHeight, finalSize.Height / RibbonMetrics.MaxRows);
+        double row = Math.Max(rowHeight, finalSize.Height / maxRows);
 
         for (int i = 0; i < Children.Count; i++)
         {
