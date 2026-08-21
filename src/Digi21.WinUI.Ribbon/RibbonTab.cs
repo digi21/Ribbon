@@ -4,6 +4,7 @@ using Digi21.WinUI.Ribbon.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
+using Windows.Foundation;
 
 namespace Digi21.WinUI.Ribbon;
 
@@ -193,6 +194,45 @@ public partial class RibbonTab : Control
         }
     }
 
+    // Measures this tab now, while it still can be, so that it can say how tall it needs to be for
+    // the rest of its life.
+    //
+    // The ribbon calls this on a tab it is about to put away. What a group needs is arithmetic over
+    // the natural heights of the items in it, and those can only be read while the tab holding them
+    // is visible - so a tab that is never chosen gets exactly one chance to be measured, and this is
+    // it. A tab declared in XAML has it long before anything is collapsed, on the pass that runs
+    // before the ribbon even has a template. A tab built from code arrives into a ribbon that is
+    // already in the tree and is put away in the same turn, and this is the whole of the moment.
+    //
+    // Measured whole rather than group by group, which is the difference between a number and the
+    // right number. Measuring the tab applies its template, puts its groups into the panel that lays
+    // them out and runs the same measure the strip runs, so every group ends up holding what it
+    // would have held had it been on show. Asked directly, a group reaches down into parts WinUI has
+    // never realized: a NumberBox with no template measures as a fraction of itself - sixty-one
+    // pixels for a stack of three that is a hundred - and every one of those fractions is a number
+    // the ribbon would then be exactly as tall as.
+    //
+    // Against no width, because what it needs is what it needs with every group open. Which of them
+    // fold is a question about a width, and it is asked again every time the strip is laid out.
+    internal void EnsureMeasured()
+    {
+        // Put back on for the length of one call, because a collapsed element is not measured at
+        // all - the layout system skips it, and every control under it that has never been given a
+        // template stays that way. Uncollapsing it here rather than relying on catching it before it
+        // is put away is what lets this be asked at any time: an application that adds a tab and
+        // then fills it, or that adds a group to a tab nobody is looking at, has changed how tall
+        // the ribbon needs to be and is entitled to be believed rather than measured next time
+        // somebody happens to click on it.
+        //
+        // Nothing sees the difference. It is set back before this returns, and no layout pass, no
+        // hit test and no automation client runs in between.
+        Visibility was = Visibility;
+
+        Visibility = Visibility.Visible;
+        Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        Visibility = was;
+    }
+
     /// <inheritdoc/>
     protected override void OnApplyTemplate()
     {
@@ -221,6 +261,16 @@ public partial class RibbonTab : Control
     private void OnGroupsChanged(object? sender, NotifyCollectionChangedEventArgs arguments)
     {
         Sync();
+
+        // A tab that is on show is measured by the pass this change has just asked for. A tab that
+        // is not is never measured again, so what it says it needs would be what it needed before
+        // this group arrived - and an application that generates its ribbon from its own command
+        // registry adds tabs and then fills them.
+        if (Visibility == Visibility.Collapsed)
+        {
+            EnsureMeasured();
+            Owner?.OnTabHeightChanged();
+        }
     }
 
     private void Sync()

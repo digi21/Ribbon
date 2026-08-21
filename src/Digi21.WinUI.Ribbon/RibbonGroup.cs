@@ -242,8 +242,7 @@ public partial class RibbonGroup : Control
     {
         get
         {
-            ApplyTemplate();
-            measured ??= MeasureItems();
+            EnsureMeasured();
 
             // A group that cannot be drawn in the rows there are is drawn as its button at every
             // width, and a button is one row whatever the group holds. Asking what its items need
@@ -257,6 +256,20 @@ public partial class RibbonGroup : Control
                 + (ShowsName ? RibbonMetrics.GroupLabelHeight : 0)
                 + (2 * RibbonMetrics.GroupPadding);
         }
+    }
+
+    // Takes the measurement this group answers about itself from, if it has not been taken yet.
+    //
+    // Asked for by the ribbon at the one moment it can be answered: while the tab is still visible.
+    // A collapsed element measures as nothing however directly it is asked, so a tab that has never
+    // been shown has exactly one chance to say how tall it needs to be - between arriving and being
+    // put away - and a ribbon built from code adds its tabs into a control that is already in the
+    // tree, so that moment is a single turn wide. Missing it is a ribbon that opens at the height of
+    // the tab that happens to be showing and grows the first time somebody looks at another one.
+    internal void EnsureMeasured()
+    {
+        ApplyTemplate();
+        measured ??= MeasureItems();
     }
 
     // Everything the layout needs to know about this group, measured now.

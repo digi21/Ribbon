@@ -135,6 +135,10 @@ public partial class Ribbon : Control
     // is about a collection that changes under it.
     private RibbonTab? showing;
 
+    // The height every tab was last levelled at, so that the end of a pass can tell whether the
+    // groups have since learned something the top of the pass did not know.
+    private double levelled;
+
     // Set while the ribbon is putting SelectedIndex back to a legal value, so that the write does not
     // start a second pass through the same code. One place decides which tab is shown, and it is
     // ShowSelectedTab; this is what stops it from being re-entered halfway down.
@@ -375,6 +379,30 @@ public partial class Ribbon : Control
     }
 
     /// <inheritdoc/>
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        Size arranged = base.ArrangeOverride(finalSize);
+
+        // The height was levelled at the top of the measure pass, out of what the groups knew then.
+        // A group learns what its rows are worth while that same pass measures it, and on the first
+        // pass of its life it learns it for the first time - so the number the strip was levelled at
+        // can already be out of date by the time the strip is drawn, and nothing has happened since
+        // that would run the pass again. That is a ribbon which opens at one height, sits at it, and
+        // corrects itself the moment the user touches a tab.
+        //
+        // Asked again here, where every group has been measured for real, and the pass is run once
+        // more when the answer has moved. It converges: what a group needs is arithmetic over the
+        // natural heights of its items, and those do not depend on how tall the ribbon made itself,
+        // so the second pass levels at the same number the check just read.
+        if (Math.Abs(Levelling() - levelled) > 0.5)
+        {
+            InvalidateMeasure();
+        }
+
+        return arranged;
+    }
+
+    /// <inheritdoc/>
     protected override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
@@ -612,6 +640,21 @@ public partial class Ribbon : Control
     // fault wearing a different hat.
     private void LevelTabs()
     {
+        double height = Levelling();
+
+        // Kept, so that the end of the pass can ask whether the number it was levelled at is still
+        // the number the groups would give now.
+        levelled = height;
+
+        foreach (RibbonTab tab in tabs)
+        {
+            tab.MinHeight = height;
+        }
+    }
+
+    // The height the whole strip has to be: the tab that needs the most.
+    private double Levelling()
+    {
         double height = 0;
 
         foreach (RibbonTab tab in tabs)
@@ -619,10 +662,7 @@ public partial class Ribbon : Control
             height = Math.Max(height, tab.RequiredHeight);
         }
 
-        foreach (RibbonTab tab in tabs)
-        {
-            tab.MinHeight = height;
-        }
+        return height;
     }
 
     private static void OnCollapseBehaviorChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
@@ -797,6 +837,14 @@ public partial class Ribbon : Control
         AnnounceStrip();
     }
 
+    // A tab that is not on show has changed how tall it needs to be, which is a question only the
+    // strip as a whole can answer: the height is the tallest tab's, and the tab that has just
+    // changed may or may not be it any more.
+    internal void OnTabHeightChanged()
+    {
+        InvalidateMeasure();
+    }
+
     // A tab has been renamed, or has changed from fixed to contextual. Neither touches the layout;
     // both change what a header draws and what it is called.
     internal void OnTabChromeChanged(RibbonTab tab)
@@ -899,9 +947,27 @@ public partial class Ribbon : Control
 
         foreach (RibbonTab tab in tabs)
         {
+            bool shown = ReferenceEquals(tab, selected);
+
+            // Measured on the way out, while it still can be. Every tab pays into the one height the
+            // ribbon has, the ones nobody has chosen included, and what a tab needs is arithmetic
+            // over the natural heights of the items in it - which a collapsed tab cannot supply,
+            // because a collapsed element measures as nothing however directly it is asked.
+            //
+            // A tab declared in XAML is measured long before it is collapsed, on the pass that runs
+            // before this control even has a template, so nothing ever noticed. A tab built from
+            // code is added to a ribbon that is already in the tree and is collapsed in this very
+            // loop: this line is the whole of the moment it has to answer in, and without it the
+            // ribbon opens at the height of whichever tab happens to be showing and grows the first
+            // time somebody looks at another one.
+            if (!shown && tab.Visibility == Visibility.Visible)
+            {
+                tab.EnsureMeasured();
+            }
+
             // Collapsed rather than removed: the layout system skips it, and the controls inside it
             // are still the ones the application is holding on to.
-            tab.Visibility = ReferenceEquals(tab, selected) ? Visibility.Visible : Visibility.Collapsed;
+            tab.Visibility = shown ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // Which header wears the mark of the tab on show, and which one the keyboard stands on -

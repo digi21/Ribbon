@@ -9,6 +9,25 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the first `v` tag.
 
+### Fixed
+
+- A ribbon built from code opens at the height it keeps. The height of the strip is the tallest
+  tab's, the tabs nobody has opened included, and what a tab needs is arithmetic over the natural
+  heights of the items in it - which can only be read while the tab can be measured at all. A
+  collapsed tab is skipped by the layout system entirely and every control under it that has never
+  been given a template answers with a fraction of itself: a stack of three labelled boxes that is a
+  hundred and two pixels tall measures sixty-one, and the ribbon was then built to whatever that
+  fraction happened to be. A tab declared in XAML is measured long before anything is collapsed and
+  never showed it; a tab built from code arrives into a ribbon that is already in the tree and is put
+  away in the same turn, which is where this was found. Every tab is now measured while it can be -
+  on its way out, and again whenever a group is added to it while it is away, because an application
+  that generates its ribbon from its own command registry adds tabs and then fills them.
+- The strip comes back down when it no longer needs the height it has. It is levelled at the top of a
+  measure pass, out of what the groups knew before that pass measured them, so a height that has just
+  stopped being needed is one nothing in that pass will argue with - and the ribbon stands at it
+  until something else causes another pass, which in practice means until the user changes tab. The
+  end of the pass now asks again, and runs the pass once more when the answer has moved.
+
 ### Added
 
 - The keyboard. The whole ribbon is one stop on the way through the window - `Tab` reaches it at the
