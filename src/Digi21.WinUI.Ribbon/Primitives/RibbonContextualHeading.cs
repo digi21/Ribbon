@@ -58,4 +58,9 @@ public partial class RibbonContextualHeading : Control
 
     // Which group this band belongs to, so that the strip can find the tabs to draw it over.
     internal RibbonContextualGroup? Group { get; set; }
+
+    // How much room this band's name asks for, measured against nothing. Kept because it is what the
+    // tabs of the group are widened to fit, and because by the time they have been the band has been
+    // measured again at the width they gave it - so this is the only place the number survives.
+    internal double Natural { get; set; }
 }

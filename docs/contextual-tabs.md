@@ -192,6 +192,18 @@ tab declared between two tabs of one group ends up under the band as well: that 
 of what was declared, and Office does not offer the arrangement at all. Declare the tabs of a group
 next to each other.
 
+**The tabs are never narrower, between them, than the name on their band.** A band may not be wider
+than its own tabs — it would start or end over somebody else's name — so when the name does not fit,
+what gives is the tabs: they are widened until it does, equally, so that two tabs of a pair stay the
+size of each other. A group of one narrow tab takes the whole of it.
+
+That is not a detail. A band drawn only as wide as its tabs is a band that, over a single tab called
+*Actions*, has room for about eight characters — so the one thing it can say is what the tab already
+says, which is the whole of what it was added to carry. Widening costs nothing here: the tab strip is
+a row that nothing competes for width in, so a floor under a few tabs takes room from no one. What it
+does cost is that a long heading makes its tabs visibly wider than the fixed ones beside them, which
+is the trade, and it is the one worth making — a name nobody can read is not a heading.
+
 ### What a screen reader is told
 
 A tab in a group announces itself through `RibbonStrings.ContextualTabInGroupNameFormat`, which takes

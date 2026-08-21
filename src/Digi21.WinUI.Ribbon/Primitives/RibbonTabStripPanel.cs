@@ -89,10 +89,8 @@ public sealed partial class RibbonTabStripPanel : Panel
             }
         }
 
-        var lefts = new double[headers.Count];
         var widths = new double[headers.Count];
 
-        double width = 0;
         double tabs = 0;
         double bands = 0;
 
@@ -106,10 +104,7 @@ public sealed partial class RibbonTabStripPanel : Panel
                 headers[i].Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             }
 
-            lefts[i] = width;
             widths[i] = headers[i].DesiredSize.Width;
-
-            width += widths[i] + Spacing;
             tabs = Math.Max(tabs, headers[i].DesiredSize.Height);
         }
 
@@ -121,9 +116,62 @@ public sealed partial class RibbonTabStripPanel : Panel
                 // being drawn. That is what holds the height: a group whose tabs are all switched
                 // off is measured exactly like one whose tabs are on the strip.
                 heading.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                heading.Natural = heading.DesiredSize.Width;
             }
 
             bands = Math.Max(bands, heading.DesiredSize.Height);
+        }
+
+        // The tabs of a group are never narrower, between them, than the name on their band. A band
+        // may not be wider than its own tabs - it would start or end over somebody else's name - so
+        // when the name does not fit, what gives is the tabs: they are laid out in a row that
+        // nothing competes for width in, and a floor under them costs the strip only its own width.
+        //
+        // Done here, before the row is placed, because everything below - where each tab starts,
+        // where each band starts and ends - is measured from these widths.
+        foreach (RibbonContextualHeading heading in headings)
+        {
+            if (heading.Group is not { } group)
+            {
+                continue;
+            }
+
+            var groups = new object?[headers.Count];
+
+            for (int i = 0; i < headers.Count; i++)
+            {
+                groups[i] = headers[i].Group;
+            }
+
+            (int first, int count) = RibbonHeadingSpan.Of(groups, group);
+
+            if (count == 0)
+            {
+                continue;
+            }
+
+            double covered = (count - 1) * Spacing;
+
+            for (int i = first; i < first + count; i++)
+            {
+                covered += widths[i];
+            }
+
+            double extra = RibbonHeadingFit.Extra(covered, heading.Natural, count);
+
+            for (int i = first; i < first + count; i++)
+            {
+                widths[i] += extra;
+            }
+        }
+
+        var lefts = new double[headers.Count];
+        double width = 0;
+
+        for (int i = 0; i < headers.Count; i++)
+        {
+            lefts[i] = width;
+            width += widths[i] + Spacing;
         }
 
         var strip = new Strip(headers, headings, lefts, widths, Math.Max(0, width - Spacing), tabs, bands);

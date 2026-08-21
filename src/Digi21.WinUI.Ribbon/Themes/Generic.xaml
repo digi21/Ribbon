@@ -169,9 +169,14 @@
                             CornerRadius="{ThemeResource RibbonTabCornerRadius}"
                             Opacity="0" />
 
+                        <!-- Centred, which costs nothing while a tab is exactly as wide as its own
+                             name and matters when it is not: a tab of a contextual group is widened
+                             until the name on the band above it fits, and a name left hanging at
+                             the left edge of the room it was given looks like a mistake. -->
                         <TextBlock
                             x:Name="Text"
                             Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="Center"
                             Foreground="{TemplateBinding Foreground}"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             Text="{Binding Label, RelativeSource={RelativeSource TemplatedParent}}" />

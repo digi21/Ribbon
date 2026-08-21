@@ -31,6 +31,14 @@ Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the 
   for, so restyling the band moves the strip with it.
 - The band is drawn from the left edge of the first tab of its group to the right edge of the last,
   and shrinks onto what is left as the tabs of the group are switched off one at a time.
+- The tabs of a group are never narrower, between them, than the name on their band: when the name
+  does not fit they are widened until it does, equally, so that two tabs of a pair stay the size of
+  each other. Reported from the first application to use the heading, which has a single contextual
+  tab seventy pixels wide: a band drawn only as wide as that has room for about eight characters, so
+  the only thing it could say was what the tab already said - the whole of what it was added to
+  carry. The other way out would have been to let the band be wider than its own tabs, which is a
+  band starting or ending over somebody else's name. Widening costs the strip nothing but its own
+  width, because the tab strip is a row that nothing competes for width in.
 - `RibbonStrings.ContextualTabInGroupNameFormat`, in nine languages: what a contextual tab under a
   heading announces itself as, which takes the tab's name and then the heading's. A tab that
   announced only its own name would leave out exactly the half the band adds, and the band itself is
