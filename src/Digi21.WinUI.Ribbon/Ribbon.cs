@@ -114,6 +114,10 @@ public partial class Ribbon : Control
     private readonly List<RibbonTabHeader> headers = [];
     private readonly List<ButtonBase> invocations = [];
 
+    // The band over each set of contextual tabs, by the group it belongs to. One per group rather
+    // than one per tab: what the band says is that these tabs are one thing.
+    private readonly Dictionary<RibbonContextualGroup, RibbonContextualHeading> headings = [];
+
     private Panel? tabStrip;
     private Panel? body;
     private FrameworkElement? strip;
@@ -497,6 +501,15 @@ public partial class Ribbon : Control
             return;
         }
 
+        // The bands go with the headers they were drawn over, and their groups stop being listened
+        // to: a group an application has taken every tab away from has nothing left to tell this
+        // ribbon, and a subscription outliving what it was for is how a control keeps a page alive.
+        foreach (RibbonContextualGroup group in headings.Keys)
+        {
+            group.Changed -= OnHeadingChanged;
+        }
+
+        headings.Clear();
         tabStrip.Children.Clear();
         headers.Clear();
 
@@ -540,9 +553,85 @@ public partial class Ribbon : Control
             }
         }
 
+        SyncHeadings();
         UpdateActivation();
         UpdateDisplayMode();
         ShowSelectedTab();
+    }
+
+    // The bands over the contextual tabs, kept in step with the groups those tabs are pointed at.
+    //
+    // One band per group and not per tab, made here rather than by the tabs, because a band belongs
+    // to the strip: two tabs of one group are drawn under one of them, and which tabs those are is a
+    // question only the strip can answer. They are made as soon as a group is declared and kept
+    // while it is - switched-off tabs included - because that is what holds the room for them and
+    // keeps a tab arriving from changing how tall the ribbon is.
+    private void SyncHeadings()
+    {
+        if (tabStrip is null)
+        {
+            return;
+        }
+
+        var wanted = new List<RibbonContextualGroup>();
+
+        foreach (RibbonTab tab in tabs)
+        {
+            // A group on a fixed tab is nothing: a heading over a tab that is always there says
+            // nothing that the tab does not already say by being there.
+            if (tab is { IsContextual: true, ContextualGroup: { } group } && !wanted.Contains(group))
+            {
+                wanted.Add(group);
+            }
+        }
+
+        foreach (RibbonContextualGroup gone in headings.Keys.Where(group => !wanted.Contains(group)).ToList())
+        {
+            gone.Changed -= OnHeadingChanged;
+            tabStrip.Children.Remove(headings[gone]);
+            headings.Remove(gone);
+        }
+
+        foreach (RibbonContextualGroup group in wanted)
+        {
+            if (!headings.TryGetValue(group, out RibbonContextualHeading? heading))
+            {
+                heading = new RibbonContextualHeading { Group = group };
+
+                headings[group] = heading;
+                group.Changed += OnHeadingChanged;
+
+                // Under the tab names rather than over them. The band is behind everything the strip
+                // draws, and a name half covered by the band above it is the one arrangement that
+                // would be worse than no band at all.
+                tabStrip.Children.Insert(0, heading);
+            }
+
+            heading.Label = group.Label;
+
+            if (group.Accent is { } accent)
+            {
+                heading.Accent = accent;
+            }
+            else
+            {
+                // Back to what the style says, which is the ribbon's own contextual accent.
+                heading.ClearValue(RibbonContextualHeading.AccentProperty);
+            }
+        }
+
+        foreach (RibbonTabHeader header in headers)
+        {
+            // Set through the header rather than read by it, because it is two things at once: the
+            // colour the tab wears, and half of what it announces itself as.
+            header.Group = header.Tab is { IsContextual: true } tab ? tab.ContextualGroup : null;
+        }
+    }
+
+    // A group has been renamed or recoloured while the ribbon is drawing it.
+    private void OnHeadingChanged(object? sender, EventArgs arguments)
+    {
+        SyncHeadings();
     }
 
     private static void OnIsMinimizedChanged(DependencyObject ribbon, DependencyPropertyChangedEventArgs arguments)
@@ -857,6 +946,11 @@ public partial class Ribbon : Control
                 header.IsContextual = tab.IsContextual;
             }
         }
+
+        // Last, because it reads the headers back: a tab that has just been given a group, or has
+        // just stopped being contextual, changes which bands there are and which tabs each of them
+        // is drawn over.
+        SyncHeadings();
     }
 
     // Which tabs are on the strip, in the order they are declared in, which is the order they are
@@ -885,6 +979,13 @@ public partial class Ribbon : Control
         {
             header.Visibility = header.Tab is { IsActive: true } ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        // Said out loud to the strip, because a child changing from collapsed to visible does not
+        // make the panel holding it measure again: it would be arranged from a size it has never
+        // been given, which is nothing, and the tab would arrive on the strip a name nobody can see
+        // or click. The strip is measured from the tabs that are on it, so a tab arriving or leaving
+        // is a question for it.
+        tabStrip?.InvalidateMeasure();
     }
 
     // Asks for a tab, and makes sure the asking is followed through even when the answer is the tab

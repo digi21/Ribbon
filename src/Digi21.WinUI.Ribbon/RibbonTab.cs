@@ -31,6 +31,10 @@ public partial class RibbonTab : Control
     public static readonly DependencyProperty IsContextualProperty =
         DependencyProperty.Register(nameof(IsContextual), typeof(bool), typeof(RibbonTab), new PropertyMetadata(false, OnChromeChanged));
 
+    /// <summary>Identifies the <see cref="ContextualGroup"/> dependency property.</summary>
+    public static readonly DependencyProperty ContextualGroupProperty =
+        DependencyProperty.Register(nameof(ContextualGroup), typeof(RibbonContextualGroup), typeof(RibbonTab), new PropertyMetadata(null, OnChromeChanged));
+
     /// <summary>Identifies the <see cref="IsActive"/> dependency property.</summary>
     public static readonly DependencyProperty IsActiveProperty =
         DependencyProperty.Register(nameof(IsActive), typeof(bool), typeof(RibbonTab), new PropertyMetadata(true, OnActiveChanged));
@@ -78,6 +82,29 @@ public partial class RibbonTab : Control
     {
         get => (bool)GetValue(IsContextualProperty);
         set => SetValue(IsContextualProperty, value);
+    }
+
+    /// <summary>Gets or sets the heading this tab is drawn under: Office's coloured band over a set of contextual tabs.</summary>
+    /// <remarks>
+    /// <para>
+    /// The band carries a name and a colour, and it is what says that these tabs go together and
+    /// that they are here because of something that has just happened - which a two pixel line above
+    /// one tab says to nobody who was not watching the strip at the moment it appeared. Point
+    /// several contextual tabs at the same <see cref="RibbonContextualGroup"/> and they are drawn
+    /// under one band; point one at it and the band is over that one.
+    /// </para>
+    /// <para>
+    /// It goes with <see cref="IsContextual"/> rather than instead of it: a fixed tab in a group is
+    /// drawn like any other fixed tab, because a heading over a tab that is always there is a
+    /// heading that says nothing. The room for the band is held from the moment any tab is given a
+    /// group, whether or not that tab is switched on, so a tab arriving never changes the height of
+    /// the ribbon.
+    /// </para>
+    /// </remarks>
+    public RibbonContextualGroup? ContextualGroup
+    {
+        get => (RibbonContextualGroup?)GetValue(ContextualGroupProperty);
+        set => SetValue(ContextualGroupProperty, value);
     }
 
     /// <summary>Gets or sets a value indicating whether the tab is on the strip. On, out of the box.</summary>

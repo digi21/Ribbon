@@ -62,7 +62,8 @@ theme and turns every word invisible in a light one.
 | `RibbonTabPointerOverBackgroundBrush` | `SubtleFillColorSecondaryBrush` | A tab under the pointer. |
 | `RibbonTabPressedBackgroundBrush` | `SubtleFillColorTertiaryBrush` | A tab being pressed. |
 | `RibbonTabSelectionIndicatorBrush` | `AccentFillColorDefaultBrush` | The line under the tab on show. |
-| `RibbonContextualTabAccentBrush` | `AccentFillColorDefaultBrush` | The line above a contextual tab, which it wears on the strip whether or not it is the tab on show. One key for all of them: a set of contextual tabs in one colour and a second set in another is what a contextual tab *group* would bring, and this version has no groups. |
+| `RibbonContextualTabAccentBrush` | `AccentFillColorDefaultBrush` | The line above a contextual tab, which it wears on the strip whether or not it is the tab on show, and the colour of a heading that has none of its own. A tab in a `RibbonContextualGroup` takes that group's `Accent` instead, so this is what a contextual tab with no group is marked in. |
+| `RibbonContextualHeadingForegroundBrush` | `TextFillColorPrimaryBrush` | The name on the coloured band over a set of contextual tabs. Ordinary text colour rather than the group's own: the colour identity is the band behind it, and a name drawn in an arbitrary application colour is a name that is unreadable in one theme sooner or later. |
 | `RibbonGroupLabelForegroundBrush` | `TextFillColorSecondaryBrush` | The name under a group. |
 | `RibbonSeparatorBrush` | `DividerStrokeColorDefaultBrush` | The rule between two columns of a group. |
 | `RibbonItemPointerOverBackgroundBrush` | `SubtleFillColorSecondaryBrush` | An item under the pointer. |
@@ -78,6 +79,7 @@ whole of the marking, which is what the application this library was written for
 | --- | --- | --- |
 | `RibbonTabSelectionIndicatorHeight` | `2` | How thick the line under the tab on show is. |
 | `RibbonContextualTabAccentHeight` | `2` | How thick the line above a contextual tab is. |
+| `RibbonContextualTintOpacity` | `0.22` | How much of a heading's colour goes behind the band and behind the tabs of its group. The line along the top of those tabs is the same colour at full strength. |
 | `RibbonTabPadding` | `12,6` | The room around a tab's name. |
 | `RibbonTabCornerRadius` | `4,4,0,0` | The corners of a tab. |
 | `RibbonItemCornerRadius` | `4` | The corners of an item and of a group's launcher. |
@@ -141,6 +143,12 @@ Two of them are less fixed than they look:
   control in a group is supported and needs nothing declared.
 - **The width of an item is measured, never assumed.** It is whatever the item's own template asks
   for at each of the three shapes, so retemplating an item changes what the layout decides with.
+
+And one number that could have been a key and is deliberately not: **how tall the coloured band over
+a set of contextual tabs is**. The strip holds exactly as much room as `RibbonContextualHeading`
+asks for, so the band's height is its own font and its own padding — restyle it and the strip follows.
+A key would have been a second answer to that question, and the two would have come apart the first
+time somebody set one without the other.
 
 ## Retemplating
 

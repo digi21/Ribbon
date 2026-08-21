@@ -24,10 +24,11 @@
                         </Grid.RowDefinitions>
 
                         <Grid x:Name="PART_Strip">
-                            <StackPanel
-                                x:Name="PART_TabStrip"
-                                Orientation="Horizontal"
-                                Spacing="2" />
+                            <!-- A panel of its own rather than a stack, because the coloured band
+                                 over a set of contextual tabs starts where its first tab starts and
+                                 ends where its last one ends, and only the thing that placed the
+                                 tabs knows where that is. -->
+                            <primitives:RibbonTabStripPanel x:Name="PART_TabStrip" />
 
                             <!--
                                 The way back, and the only one there is once the ribbon is put away:
@@ -142,6 +143,10 @@
         <Setter Property="UseSystemFocusVisuals" Value="True" />
         <Setter Property="Padding" Value="{ThemeResource RibbonTabPadding}" />
         <Setter Property="Foreground" Value="{ThemeResource RibbonTabForegroundBrush}" />
+
+        <!-- What a contextual tab is marked in when it is not in a group. A tab in one takes the
+             heading's colour instead, written over this by the ribbon. -->
+        <Setter Property="Accent" Value="{ThemeResource RibbonContextualTabAccentBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="primitives:RibbonTabHeader">
@@ -149,6 +154,21 @@
                         x:Name="Root"
                         Background="Transparent"
                         CornerRadius="{ThemeResource RibbonTabCornerRadius}">
+                        <!--
+                            The tab tinted in the colour of the heading above it, which is what makes
+                            a contextual tab tell itself apart from a fixed one at a glance rather
+                            than by a two pixel line somebody has to already be looking at.
+
+                            Under the name and over the background the pointer states paint, so a
+                            contextual tab keeps its colour while the pointer is on it: the two are
+                            translucent and they mix, rather than one replacing the other.
+                        -->
+                        <Border
+                            x:Name="ContextualTint"
+                            Background="{TemplateBinding Accent}"
+                            CornerRadius="{ThemeResource RibbonTabCornerRadius}"
+                            Opacity="0" />
+
                         <TextBlock
                             x:Name="Text"
                             Margin="{TemplateBinding Padding}"
@@ -183,14 +203,14 @@
                             one on show has to be able to say both things at once.
 
                             Edge to edge rather than inset like the indicator below it: two contextual
-                            tabs side by side then draw one unbroken line, which is what a coloured
-                            heading over a set of them would be underlined by the day there is one.
+                            tabs side by side draw one unbroken line, and that line is what the
+                            coloured heading over a set of them is underlined by.
                         -->
                         <Rectangle
                             x:Name="ContextualAccent"
                             Height="{ThemeResource RibbonContextualTabAccentHeight}"
                             VerticalAlignment="Top"
-                            Fill="{ThemeResource RibbonContextualTabAccentBrush}"
+                            Fill="{TemplateBinding Accent}"
                             Opacity="0" />
 
                         <VisualStateManager.VisualStateGroups>
@@ -277,10 +297,46 @@
                                 <VisualState x:Name="Contextual">
                                     <VisualState.Setters>
                                         <Setter Target="ContextualAccent.Opacity" Value="1" />
+                                        <Setter Target="ContextualTint.Opacity" Value="{ThemeResource RibbonContextualTintOpacity}" />
                                     </VisualState.Setters>
                                 </VisualState>
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        The coloured band over a set of contextual tabs, and the one thing in this file whose height
+        nothing else is measured against: the strip holds as much room as this style asks for, so a
+        band given a bigger font or more padding pushes the tab names down rather than being cut.
+    -->
+    <Style TargetType="primitives:RibbonContextualHeading">
+        <Setter Property="Foreground" Value="{ThemeResource RibbonContextualHeadingForegroundBrush}" />
+        <Setter Property="Accent" Value="{ThemeResource RibbonContextualTabAccentBrush}" />
+        <Setter Property="Padding" Value="8,1" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="primitives:RibbonContextualHeading">
+                    <Grid>
+                        <!-- The same colour as the tabs under it and at the same strength, so that
+                             the band and the tabs read as one block rather than as two things that
+                             happen to be near each other. -->
+                        <Border
+                            Background="{TemplateBinding Accent}"
+                            CornerRadius="{ThemeResource RibbonTabCornerRadius}"
+                            Opacity="{ThemeResource RibbonContextualTintOpacity}" />
+
+                        <TextBlock
+                            Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="{TemplateBinding Foreground}"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Text="{Binding Label, RelativeSource={RelativeSource TemplatedParent}}"
+                            TextTrimming="CharacterEllipsis" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

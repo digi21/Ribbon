@@ -12,6 +12,19 @@
         and turns every word invisible in a light one.
     -->
     <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.Resources>
+            <!--
+                The heading over the contextual tabs: a name and a colour, shared by every tab that
+                belongs to it. Office's Picture Tools, and what it says that the accent line alone
+                cannot is that these tabs go together and that they are here because of something
+                that has just happened.
+
+                On the root element and not on the window: a WinUI 3 Window is not a
+                FrameworkElement and has no resources of its own.
+            -->
+            <ribbon:RibbonContextualGroup x:Key="PictureTools" Label="Picture Tools" Accent="#C55A11" />
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -208,6 +221,7 @@
                 x:Name="Picture"
                 Label="Picture"
                 IsContextual="True"
+                ContextualGroup="{StaticResource PictureTools}"
                 IsActive="False">
                 <ribbon:RibbonGroup Label="Adjust" Priority="0">
                     <ribbon:RibbonGroup.IconSource>
@@ -228,6 +242,35 @@
                             <SymbolIconSource Symbol="Highlight" />
                         </ribbon:RibbonToggleButton.IconSource>
                     </ribbon:RibbonToggleButton>
+                </ribbon:RibbonGroup>
+            </ribbon:RibbonTab>
+
+            <!--
+                The second tab of the same heading, and the reason a heading is an object rather than
+                a property: both of these point at one instance, so one band is drawn over the pair
+                of them. They arrive and leave together, because what they are both about is the same
+                thing having been selected.
+            -->
+            <ribbon:RibbonTab
+                x:Name="PictureFormat"
+                Label="Format"
+                IsContextual="True"
+                ContextualGroup="{StaticResource PictureTools}"
+                IsActive="False">
+                <ribbon:RibbonGroup Label="Styles" Priority="0">
+                    <ribbon:RibbonGroup.IconSource>
+                        <SymbolIconSource Symbol="Highlight" />
+                    </ribbon:RibbonGroup.IconSource>
+                    <ribbon:RibbonButton Label="Border">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Highlight" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
+                    <ribbon:RibbonButton Label="Shadow">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Copy" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
                 </ribbon:RibbonGroup>
             </ribbon:RibbonTab>
 

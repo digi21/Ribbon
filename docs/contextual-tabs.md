@@ -130,15 +130,78 @@ The point is that a test can find out what happened without polling the visual t
   and a tab taking the strip raises `SelectionItemPatternOnElementSelected` on its header. Both are
   raised only when something is listening.
 
+## The heading over a set of them
+
+A two pixel accent line says *this tab is contextual* to somebody who is looking at the strip at the
+moment it appears. It says nothing to anybody else, and it says nothing at all about which tabs
+belong together. Office's answer is a coloured band above them carrying a name — Table Tools, Picture
+Tools — and that is `RibbonContextualGroup`:
+
+```xml
+<Grid.Resources>
+    <ribbon:RibbonContextualGroup x:Key="PictureTools" Label="Picture Tools" Accent="#C55A11" />
+</Grid.Resources>
+
+<ribbon:RibbonTab Label="Picture" IsContextual="True" ContextualGroup="{StaticResource PictureTools}" IsActive="{x:Bind ...}" />
+<ribbon:RibbonTab Label="Format"  IsContextual="True" ContextualGroup="{StaticResource PictureTools}" IsActive="{x:Bind ...}" />
+```
+
+or, built from code:
+
+```csharp
+var tools = new RibbonContextualGroup { Label = "Picture tools", Accent = brush };
+
+picture.ContextualGroup = tools;
+format.ContextualGroup = tools;
+```
+
+Any number of tabs can point at one group, and one tab is a perfectly ordinary case: the band is then
+over that tab alone, which is what Office draws for a lone contextual tab too. **A WinUI 3 `Window`
+has no `Resources`**, so in XAML the group goes on the root element or in `App.xaml` rather than on
+the window.
+
+**One brush does the whole heading.** The band behind the name, the tint behind the tabs of the
+group, and the line along the top of each of them all come from `Accent`. The band and the tint are
+drawn from it at `RibbonContextualTintOpacity`, so what to hand over is a saturated colour — the same
+one the line is drawn in at full strength. Leave `Accent` unset and the group takes
+`RibbonContextualTabAccentBrush`, which is the ribbon's own accent colour.
+
+The tint is the part that matters most in practice. The band says what the tabs are for; the tint is
+what makes a contextual tab tell itself apart from a fixed one at a glance, at any moment, rather
+than only in the second it arrives.
+
+### What it does to the height
+
+Nothing, ever. The room for the band is held from the moment **any** tab is given a group, whether or
+not that tab is switched on — so the strip is exactly as tall with the band drawn as without it, and
+a tab arriving fills room that was already there.
+
+That is the whole reason it is done that way. `IsActive` is what changes many times a minute; a strip
+that grew as a tab arrived would push the window down at the moment somebody was reaching into it,
+which is the fault contextual tabs exist to avoid. A ribbon with no contextual group at all holds no
+room and is exactly as tall as it was before there were bands to draw.
+
+### Where it is drawn
+
+From the left edge of the first tab of its group to the right edge of the last, gaps between them
+included, and above the names rather than across them. As tabs of the group are switched off the band
+shrinks onto what is left; with none of them on the strip it is drawn over nothing at all.
+
+Tabs are never reordered, so a set of contextual tabs declared together stays together. A **fixed**
+tab declared between two tabs of one group ends up under the band as well: that is the honest picture
+of what was declared, and Office does not offer the arrangement at all. Declare the tabs of a group
+next to each other.
+
+### What a screen reader is told
+
+A tab in a group announces itself through `RibbonStrings.ContextualTabInGroupNameFormat`, which takes
+the tab's name and then the heading's — `"Picture, contextual tab, Picture tools"` out of the box, and
+in nine languages in [localisation.md](localisation.md). A tab that announced only its own name would
+leave out exactly the half the band adds, and the band itself is out of the automation tree, because
+saying it twice is worse than saying it once for somebody who cannot see that the two are the same
+thing.
+
 ## What this version does not do
 
-There is no contextual tab *group*: Office's coloured heading spanning several tabs at once
-("Table Tools"), with each group in its own colour. A single contextual tab is the whole feature
-here.
-
-The shape is left open for it rather than closed against it. The accent line is drawn along the
-**top** edge of a header and edge to edge rather than inset, so two contextual tabs side by side
-already draw one unbroken line — which is what a heading above them would be underlined by. Tabs are
-never reordered, so a set of contextual tabs declared together stays contiguous in the strip, which
-is what a heading would have to span. Adding the group later means adding a row above the strip and a
-brush per group; it does not mean revisiting `IsActive`, the ordering, or the selection rule.
+Office offers a fixed palette of heading colours and an application picks one. Here the application
+brings its own brush, which is less API to learn and one less list to keep in step with a theme.

@@ -68,12 +68,22 @@ public class LocalisationTests
         // a review.
         string section = Section(language);
 
-        foreach (string name in Strings().Where(name => name.EndsWith("Format", StringComparison.Ordinal)))
+        foreach (PropertyInfo property in Properties().Where(property => property.Name.EndsWith("Format", StringComparison.Ordinal)))
         {
-            Match assignment = Regex.Match(section, $@"RibbonStrings\.{name} = ""([^""]*)"";");
+            Match assignment = Regex.Match(section, $@"RibbonStrings\.{property.Name} = ""([^""]*)"";");
 
-            Assert.True(assignment.Success, $"'{language}' does not set {name}");
-            Assert.True(assignment.Groups[1].Value.Contains("{0}", StringComparison.Ordinal), $"'{language}' drops the placeholder from {name}");
+            Assert.True(assignment.Success, $"'{language}' does not set {property.Name}");
+
+            // Which placeholders a sentence needs is read off the sentence itself rather than
+            // assumed to be one: what a contextual tab in a group announces takes the tab's name and
+            // the heading's, and a translation that keeps the first and drops the second reads
+            // perfectly well and leaves out the half that groups it.
+            foreach (Match placeholder in Regex.Matches((string)property.GetValue(null)!, @"\{\d+\}"))
+            {
+                Assert.True(
+                    assignment.Groups[1].Value.Contains(placeholder.Value, StringComparison.Ordinal),
+                    $"'{language}' drops {placeholder.Value} from {property.Name}");
+            }
         }
     }
 

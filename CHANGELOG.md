@@ -9,6 +9,37 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the first `v` tag.
 
+### Added
+
+- `RibbonContextualGroup` and `RibbonTab.ContextualGroup`: the coloured heading over a set of
+  contextual tabs, which is Office's Table Tools and Picture Tools. A group carries a name and a
+  brush; point any number of contextual tabs at one instance and they are drawn under one band, and
+  point a single tab at it and the band is over that tab alone. It is the answer to a question the
+  two pixel accent line cannot answer - a line says *this tab is contextual* to somebody who happens
+  to be looking at the strip in the second it appears, and says nothing about which tabs belong
+  together or why they are here. One brush does the whole heading: the band behind the name, the tint
+  behind the tabs of the group, and the line along the top of each of them, the first two drawn from
+  it at `RibbonContextualTintOpacity`. The tint is the part that earns its keep - it is what makes a
+  contextual tab tell itself apart from a fixed one at a glance, at any moment rather than only as it
+  arrives.
+- It costs the strip no height. The room for the band is held from the moment any tab is given a
+  group, whether or not that tab is switched on, so a tab arriving fills room that was already there:
+  `IsActive` is what changes many times a minute, and a strip that grew as a tab arrived would push
+  the window down at the moment somebody was reaching into it. A ribbon with no contextual group at
+  all holds no room and is exactly as tall as it was before there were bands to draw. The height of
+  the band is not a theme key either: the strip holds as much room as `RibbonContextualHeading` asks
+  for, so restyling the band moves the strip with it.
+- The band is drawn from the left edge of the first tab of its group to the right edge of the last,
+  and shrinks onto what is left as the tabs of the group are switched off one at a time.
+- `RibbonStrings.ContextualTabInGroupNameFormat`, in nine languages: what a contextual tab under a
+  heading announces itself as, which takes the tab's name and then the heading's. A tab that
+  announced only its own name would leave out exactly the half the band adds, and the band itself is
+  out of the automation tree, because saying it twice is worse than saying it once for somebody who
+  cannot see that the two are the same thing.
+- `RibbonContextualHeadingForegroundBrush` and `RibbonContextualTintOpacity` join the theme keys, and
+  the tab strip is now a panel of this library's own: where a band starts and ends is where its first
+  and last tab start and end, and only the thing that placed the tabs knows that.
+
 ### Fixed
 
 - A ribbon built from code opens at the height it keeps. The height of the strip is the tallest

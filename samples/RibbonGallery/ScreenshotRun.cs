@@ -27,6 +27,7 @@ internal sealed class ScreenshotRun(string outputPath, ElementTheme theme)
         // Through the gallery's own selector rather than straight onto the root, so that the picture
         // does not show a window in one theme with a box saying it is in another.
         window.SetThemeForPicture(theme);
+        window.ShowTheContextualHeadingForPicture();
 
         // Wide enough for every group at its largest, and short enough that the ribbon is the
         // subject rather than a strip above a page of prose.

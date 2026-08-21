@@ -53,6 +53,14 @@ public static class RibbonStrings
     /// </remarks>
     public static string ContextualTabNameFormat { get; set; } = "{0}, contextual tab";
 
+    /// <summary>Gets or sets what a contextual tab under a heading announces itself as. Takes the tab's name and then the heading's.</summary>
+    /// <remarks>
+    /// The band over a set of contextual tabs is what says what they are all for, and it says it by
+    /// being drawn - so a tab that announced only its own name would leave out the half that groups
+    /// it. Both placeholders are needed: <c>{0}</c> is the tab and <c>{1}</c> is the heading.
+    /// </remarks>
+    public static string ContextualTabInGroupNameFormat { get; set; } = "{0}, contextual tab, {1}";
+
     /// <summary>Gets or sets what the button a folded group becomes announces itself as. Takes the group's name.</summary>
     /// <remarks>
     /// Worth saying that it is folded rather than only naming it: the commands it holds are one press

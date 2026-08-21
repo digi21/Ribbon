@@ -32,6 +32,7 @@
             <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
 
             <StaticResource x:Key="RibbonContextualTabAccentBrush" ResourceKey="AccentFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonContextualHeadingForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
 
             <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
             <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
@@ -55,6 +56,7 @@
             <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
 
             <StaticResource x:Key="RibbonContextualTabAccentBrush" ResourceKey="AccentFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonContextualHeadingForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
 
             <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
             <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
@@ -78,6 +80,7 @@
             <StaticResource x:Key="RibbonTabSelectionIndicatorBrush" ResourceKey="AccentFillColorDefaultBrush" />
 
             <StaticResource x:Key="RibbonContextualTabAccentBrush" ResourceKey="AccentFillColorDefaultBrush" />
+            <StaticResource x:Key="RibbonContextualHeadingForegroundBrush" ResourceKey="TextFillColorPrimaryBrush" />
 
             <StaticResource x:Key="RibbonGroupLabelForegroundBrush" ResourceKey="TextFillColorSecondaryBrush" />
             <StaticResource x:Key="RibbonSeparatorBrush" ResourceKey="DividerStrokeColorDefaultBrush" />
@@ -91,6 +94,11 @@
     <!-- The same in every theme, so outside the theme dictionaries. -->
     <x:Double x:Key="RibbonTabSelectionIndicatorHeight">2</x:Double>
     <x:Double x:Key="RibbonContextualTabAccentHeight">2</x:Double>
+
+    <!-- How much of the heading colour is put behind a band and behind the tabs under it. The line
+         along the top of each of those tabs is the same colour at full strength, which is what makes
+         a tint this light enough to read a name through and still enough to see across a window. -->
+    <x:Double x:Key="RibbonContextualTintOpacity">0.22</x:Double>
     <x:Double x:Key="RibbonLauncherSize">16</x:Double>
     <CornerRadius x:Key="RibbonTabCornerRadius">4,4,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonItemCornerRadius">4</CornerRadius>

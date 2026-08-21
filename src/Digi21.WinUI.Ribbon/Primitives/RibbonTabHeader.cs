@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 namespace Digi21.WinUI.Ribbon.Primitives;
 
@@ -43,6 +44,11 @@ public partial class RibbonTabHeader : ButtonBase
     public static readonly DependencyProperty IsContextualProperty =
         DependencyProperty.Register(nameof(IsContextual), typeof(bool), typeof(RibbonTabHeader), new PropertyMetadata(false, OnIsContextualChanged));
 
+    /// <summary>Identifies the <see cref="Accent"/> dependency property.</summary>
+    public static readonly DependencyProperty AccentProperty =
+        DependencyProperty.Register(nameof(Accent), typeof(Brush), typeof(RibbonTabHeader), new PropertyMetadata(null));
+
+    private RibbonContextualGroup? group;
     private bool pointerOver;
     private bool pressed;
 
@@ -72,6 +78,40 @@ public partial class RibbonTabHeader : ButtonBase
     {
         get => (bool)GetValue(IsContextualProperty);
         set => SetValue(IsContextualProperty, value);
+    }
+
+    /// <summary>Gets or sets the colour this tab is marked in: the line above its name, and the tint behind it.</summary>
+    /// <remarks>The heading's colour when the tab is in a group, and the ribbon's own contextual accent when it is not - which is what the style puts here.</remarks>
+    public Brush? Accent
+    {
+        get => (Brush?)GetValue(AccentProperty);
+        set => SetValue(AccentProperty, value);
+    }
+
+    // The heading this tab is drawn under, or nothing. It decides two things about the header - the
+    // colour it wears and the name it announces - and one about the strip, which is the row of tabs
+    // the band above them is drawn over.
+    internal RibbonContextualGroup? Group
+    {
+        get => group;
+
+        set
+        {
+            group = value;
+
+            if (value?.Accent is { } accent)
+            {
+                Accent = accent;
+            }
+            else
+            {
+                // Back to what the style says, which is the ribbon's own contextual accent. Writing
+                // null here instead would paint the line and the tint with nothing at all.
+                ClearValue(AccentProperty);
+            }
+
+            UpdateAutomationName();
+        }
     }
 
     internal RibbonTab? Tab { get; set; }
@@ -203,10 +243,23 @@ public partial class RibbonTabHeader : ButtonBase
     // length.
     private void UpdateAutomationName()
     {
-        AutomationProperties.SetName(
-            this,
-            IsContextual
-                ? string.Format(CultureInfo.CurrentCulture, RibbonStrings.ContextualTabNameFormat, Label)
-                : Label);
+        // Three sentences rather than two, because the band over a set of contextual tabs is the
+        // part that says what they are all for - "Selection tools" over Actions and Format - and it
+        // is drawn, which means it is said to nobody who cannot see the strip. A tab in a group that
+        // announced only its own name would leave out the half that groups it.
+        string name = (IsContextual, group) switch
+        {
+            (true, { } inGroup) => string.Format(
+                CultureInfo.CurrentCulture,
+                RibbonStrings.ContextualTabInGroupNameFormat,
+                Label,
+                inGroup.Label),
+
+            (true, null) => string.Format(CultureInfo.CurrentCulture, RibbonStrings.ContextualTabNameFormat, Label),
+
+            _ => Label,
+        };
+
+        AutomationProperties.SetName(this, name);
     }
 }

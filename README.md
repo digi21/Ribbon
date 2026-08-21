@@ -12,7 +12,7 @@ scrolls out of reach, and nothing is ever built twice.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/digi21/Ribbon/main/assets/gallery-dark.png" />
-  <img src="https://raw.githubusercontent.com/digi21/Ribbon/main/assets/gallery.png" width="820" alt="The gallery: a Home tab with Clipboard, Font and Paragraph groups, items at three sizes, a hosted number box and combo box, and the chevron that puts the ribbon away" />
+  <img src="https://raw.githubusercontent.com/digi21/Ribbon/main/assets/gallery.png" width="820" alt="The gallery: a Home tab with Clipboard, Font and Paragraph groups, items at three sizes, a hosted number box and combo box, the chevron that puts the ribbon away, and a Picture Tools heading in its own colour over two contextual tabs that have just arrived" />
 </picture>
 
 ## Why this exists
@@ -61,8 +61,14 @@ what the library is measured against:
   forward as it comes, unless you set `SelectsWhenActivated="False"`; when it goes, the ribbon goes
   back to the tab the user came from. It never changes the ribbon's height, and nothing is rebuilt on
   the way, so a tab that comes and goes twenty times a minute costs one build.
-  [docs/contextual-tabs.md](https://github.com/digi21/Ribbon/blob/main/docs/contextual-tabs.md) has
-  every decided behaviour, including what happens when it disappears out from under you.
+- **A coloured heading over a set of them**, which is Office's Table Tools and Picture Tools.
+  `RibbonContextualGroup` carries a name and a colour; point any number of contextual tabs at one and
+  they are drawn under one band, in one colour, with that colour tinting the tabs themselves - which
+  is what makes a contextual tab tell itself apart from a fixed one at a glance rather than only in
+  the second it arrives. It costs the strip no height at all: the room for the band is held from the
+  moment a tab is given a group, so a tab arriving fills room that was already there. Both are in
+  [docs/contextual-tabs.md](https://github.com/digi21/Ribbon/blob/main/docs/contextual-tabs.md),
+  including what happens when a tab disappears out from under you.
 - **UI Automation that works**: `InvokePattern` on buttons, `TogglePattern` on two-state ones,
   `TabItem` with `SelectionItemPattern` on every tab and `SelectionPattern` on the ribbon itself, and
   `AutomationProperties.Name` on everything, so the application on top can be driven by a test rather
@@ -179,9 +185,9 @@ The architecture is meant not to rule them out, but none of these is being built
 
 - Keytips.
 - A backstage or File menu.
-- Contextual tab *groups*: Office's coloured heading spanning several contextual tabs at once, each
-  set in its own colour. A single contextual tab is here; the heading over a set of them is not, and
-  the shape is left open for it rather than closed against it.
+- A fixed palette of heading colours to choose from, as Office offers. A `RibbonContextualGroup`
+  takes a brush of the application's own instead, which is less API and one less list to keep in step
+  with a theme.
 - User customization of the ribbon.
 
 ## Sample

@@ -47,6 +47,16 @@ public sealed partial class MainWindow : Window
             ContextualResult.Text = $"'{tab.Label}' has gone, and the ribbon is showing '{Ribbon.SelectedTab?.Label}'";
     }
 
+    // Also used by the screenshot run. The contextual tabs are switched on and the ribbon put back
+    // on Home, so that the picture shows both things at once: the coloured heading over a set of
+    // tabs that have just arrived, and the tab worth looking at underneath it. Driven through the
+    // switch rather than through the tabs, so it is the same journey a user makes.
+    internal void ShowTheContextualHeadingForPicture()
+    {
+        PictureSelected.IsOn = true;
+        Ribbon.SelectedIndex = 0;
+    }
+
     // Used by the screenshot run, which drives the selector rather than the root so that the picture
     // does not show a window in one theme with a box beside it saying another.
     internal void SetThemeForPicture(ElementTheme theme)
@@ -98,6 +108,10 @@ public sealed partial class MainWindow : Window
         // line. In an application it would be a binding rather than a handler; it is a handler here
         // so that the switch and the line above it sit next to each other.
         Picture.IsActive = PictureSelected.IsOn;
+
+        // Both tabs of the heading, because what they are both about is the same picture being
+        // selected. The band over them is drawn while either of them is on the strip.
+        PictureFormat.IsActive = PictureSelected.IsOn;
     }
 
     private void OnRename(object sender, RoutedEventArgs arguments)
