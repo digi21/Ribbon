@@ -3,6 +3,8 @@
 # Digi21.WinUI.Ribbon
 
 [![CI](https://github.com/digi21/Ribbon/actions/workflows/ci.yml/badge.svg)](https://github.com/digi21/Ribbon/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/v/Digi21.WinUI.Ribbon.svg)](https://www.nuget.org/packages/Digi21.WinUI.Ribbon)
+[![Downloads](https://img.shields.io/nuget/dt/Digi21.WinUI.Ribbon.svg)](https://www.nuget.org/packages/Digi21.WinUI.Ribbon)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 An Office-style ribbon for WinUI 3. Tabs hold groups, groups hold items, and the whole thing gives
@@ -116,7 +118,7 @@ what the library is measured against:
 dotnet add package Digi21.WinUI.Ribbon
 ```
 
-## A ribbon in one screenful
+## Quickstart
 
 ```xml
 <Page
@@ -214,7 +216,7 @@ Tabs, groups and items can be added and removed while the ribbon is on screen, a
 application put in a group stays the same object through every relayout — that is the promise the
 whole library is built on, so keep the reference in a field and use it.
 
-### Theming
+## Theming
 
 Every colour the ribbon paints with is an alias of a WinUI system brush, so it follows the accent
 colour, both themes and high contrast on its own. Redeclare a key to change one:
@@ -231,7 +233,7 @@ window will show through black and turn every word invisible in a light theme.
 [docs/theming.md](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) has the full list of
 keys, where an override has to go, how to retemplate a control, and what is deliberately not a key.
 
-### Other languages
+## Other languages
 
 The ribbon does not translate what you put in it: the name of a tab, of a group, of an item is yours
 and arrives already in the user's language, because only your application knows what it is saying.
@@ -267,19 +269,6 @@ the word Office uses in that language rather than a translation of the English o
 - [What WinUI cost this library](https://github.com/digi21/Ribbon/blob/main/docs/winui.md) — the
   things that are not guessable, fail quietly, and each cost an afternoon. Worth reading before
   concluding that something is impossible.
-
-## Status
-
-**0.1.0 is the first published version.** It is in use: the application it was written for ships its
-whole ribbon on it, which is what every behaviour described above was measured against.
-
-It is a `0.x` on purpose. Everything here is settled enough to build on and nothing is frozen: a name
-or a default may still move before `1.0`, and when one does it is in
-[CHANGELOG.md](https://github.com/digi21/Ribbon/blob/main/CHANGELOG.md) with the reason. Between
-releases the repository builds as `0.1.0-dev.N`, where `N` is the number of commits since the tag, so
-a local feed can hold several of them side by side.
-
-What follows is what this version does not do.
 
 ## Not in this version
 

@@ -25,14 +25,13 @@
 
     <!--
       A tagged commit builds as exactly that version; every build after it is a pre-release of the
-      next one - 0.1.0-dev.1, 0.1.0-dev.2, and so on, where the number is how many commits there
+      next one - 1.0.1-dev.1, 1.0.1-dev.2, and so on, where the number is how many commits there
       have been since the tag. Each one is a distinct version, so a local feed can hold several and
       a consumer picks a new one up without anybody having to clear the NuGet cache.
 
-      The minimum below is what an untagged repository builds as, and this one has no tag yet: the
-      API is not settled, so nothing here is v1. The first tag is what decides from then on.
+      The minimum below only matters if the tags are ever lost; the tag is what decides.
     -->
-    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
     <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
 
