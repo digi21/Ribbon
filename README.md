@@ -116,6 +116,104 @@ what the library is measured against:
 dotnet add package Digi21.WinUI.Ribbon
 ```
 
+## A ribbon in one screenful
+
+```xml
+<Page
+    xmlns:ribbon="using:Digi21.WinUI.Ribbon"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ribbon:Ribbon>
+            <ribbon:RibbonTab Label="Home">
+                <ribbon:RibbonGroup Label="Clipboard" Priority="0">
+                    <ribbon:RibbonGroup.IconSource>
+                        <SymbolIconSource Symbol="Paste" />
+                    </ribbon:RibbonGroup.IconSource>
+
+                    <!-- Takes every shape: icon above text, icon beside text, icon alone. -->
+                    <ribbon:RibbonButton Label="Paste" Click="OnPaste">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Paste" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
+
+                    <!-- Never grows past its icon and its label. -->
+                    <ribbon:RibbonButton Label="Cut" ribbon:Ribbon.AllowedSizes="Normal,Small">
+                        <ribbon:RibbonButton.IconSource>
+                            <SymbolIconSource Symbol="Cut" />
+                        </ribbon:RibbonButton.IconSource>
+                    </ribbon:RibbonButton>
+                </ribbon:RibbonGroup>
+
+                <ribbon:RibbonGroup Label="Font" Priority="10">
+                    <ribbon:RibbonGroup.IconSource>
+                        <SymbolIconSource Symbol="Font" />
+                    </ribbon:RibbonGroup.IconSource>
+
+                    <ribbon:RibbonToggleButton Label="Bold" ribbon:Ribbon.AllowedSizes="Small">
+                        <ribbon:RibbonToggleButton.IconSource>
+                            <SymbolIconSource Symbol="Bold" />
+                        </ribbon:RibbonToggleButton.IconSource>
+                    </ribbon:RibbonToggleButton>
+
+                    <!-- Any WinUI control, with a name beside it, keeping its own focus. -->
+                    <ribbon:RibbonContentItem Label="Size">
+                        <NumberBox x:Name="FontSize" Width="92" Value="12" />
+                    </ribbon:RibbonContentItem>
+                </ribbon:RibbonGroup>
+            </ribbon:RibbonTab>
+        </ribbon:Ribbon>
+
+        <ScrollViewer Grid.Row="1">
+            <!-- The application's own content. -->
+        </ScrollViewer>
+    </Grid>
+</Page>
+```
+
+Three things in there are worth pointing at. `Priority` is the order the groups give way in as the
+window narrows — the lowest goes first. `Ribbon.AllowedSizes` is how an item says which shapes it
+accepts; leave it off and the item takes all three. And the row the ribbon sits in is `Auto`: the
+ribbon is a strip with the application's content under it, and it asks for the height it needs.
+
+**Give the root a background.** The ribbon paints itself with a WinUI layer brush, which is
+translucent by design because it is meant to sit on a page. Without
+`{ThemeResource ApplicationPageBackgroundThemeBrush}` behind it, an unpackaged WinUI window shows
+through black and every word in a light theme goes invisible.
+
+### The same from code
+
+The programmatic API is not an afterthought: the first application to use this library generates its
+ribbon from its own command registry, so everything the markup does is a property or a collection.
+
+```csharp
+var ribbon = new Ribbon();
+var home = new RibbonTab { Label = "Home" };
+var clipboard = new RibbonGroup { Label = "Clipboard", Priority = 0 };
+
+var paste = new RibbonButton
+{
+    Label = "Paste",
+    IconSource = new SymbolIconSource { Symbol = Symbol.Paste },
+};
+
+paste.Click += OnPaste;
+Ribbon.SetAllowedSizes(paste, RibbonItemSizes.All);
+
+clipboard.Items.Add(paste);
+home.Groups.Add(clipboard);
+ribbon.Tabs.Add(home);
+```
+
+Tabs, groups and items can be added and removed while the ribbon is on screen, and a control an
+application put in a group stays the same object through every relayout — that is the promise the
+whole library is built on, so keep the reference in a field and use it.
+
 ### Theming
 
 Every colour the ribbon paints with is an alias of a WinUI system brush, so it follows the accent
@@ -172,12 +270,16 @@ the word Office uses in that language rather than a translation of the English o
 
 ## Status
 
-The API is being designed and nothing has been released. The version this repository builds is
-`0.1.0-dev.N`, where `N` is the number of commits, so every build is a distinct pre-release that a
-local feed can hold alongside the last one.
+**0.1.0 is the first published version.** It is in use: the application it was written for ships its
+whole ribbon on it, which is what every behaviour described above was measured against.
 
-The quickstart, the programmatic API, theming and the guides in `docs/` land here as the control
-takes shape. What follows is settled: it is the shape of the first version, and what it will not do.
+It is a `0.x` on purpose. Everything here is settled enough to build on and nothing is frozen: a name
+or a default may still move before `1.0`, and when one does it is in
+[CHANGELOG.md](https://github.com/digi21/Ribbon/blob/main/CHANGELOG.md) with the reason. Between
+releases the repository builds as `0.1.0-dev.N`, where `N` is the number of commits since the tag, so
+a local feed can hold several of them side by side.
+
+What follows is what this version does not do.
 
 ## Not in this version
 

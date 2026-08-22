@@ -7,7 +7,14 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing has been released yet. The repository builds as `0.1.0-dev.N` until the first `v` tag.
+Nothing yet. The repository builds as `0.1.0-dev.N`, where `N` is the number of commits since the
+last tag.
+
+## [0.1.0] - 2026-08-22
+
+The first published version, and everything below is in it. It is a `0.x` on purpose: settled enough
+to build on, and not frozen. A name or a default that moves before `1.0` will be here with the
+reason.
 
 ### Added
 
