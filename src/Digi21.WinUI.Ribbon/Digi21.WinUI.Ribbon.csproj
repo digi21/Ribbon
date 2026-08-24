@@ -25,13 +25,17 @@
 
     <!--
       A tagged commit builds as exactly that version; every build after it is a pre-release of the
-      next one - 1.0.1-dev.1, 1.0.1-dev.2, and so on, where the number is how many commits there
+      next one - 2.0.0-dev.1, 2.0.0-dev.2, and so on, where the number is how many commits there
       have been since the tag. Each one is a distinct version, so a local feed can hold several and
       a consumer picks a new one up without anybody having to clear the NuGet cache.
 
-      The minimum below only matters if the tags are ever lost; the tag is what decides.
+      The minimum below is what says which version is being worked towards, and it is 2.0 because
+      the sentences the ribbon says on its own account stopped being public API. Left at 1.0, a
+      build that removes a public type would go out numbered 1.0.1 - a patch, to anybody reading
+      only the version - and the first thing a consumer would learn about the break is that it no
+      longer compiles.
     -->
-    <MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
+    <MinVerMinimumMajorMinor>2.0</MinVerMinimumMajorMinor>
     <MinVerDefaultPreReleaseIdentifiers>dev</MinVerDefaultPreReleaseIdentifiers>
   </PropertyGroup>
 

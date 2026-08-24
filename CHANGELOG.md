@@ -8,7 +8,7 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 The next release is **2.0.0**: the one entry below is a breaking change, and the repository builds as
-`1.0.1-dev.N` until the tag that says otherwise.
+`2.0.0-dev.N` until the tag that says so.
 
 ### Changed
 
