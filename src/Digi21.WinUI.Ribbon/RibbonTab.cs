@@ -70,8 +70,8 @@ public partial class RibbonTab : Control
     /// <para>
     /// A contextual tab is marked as one - an accent line above its name, which is where the coloured
     /// heading over a set of them would go - and it steps forward as it arrives, which a fixed tab
-    /// hidden and shown again never does. It also says so to a screen reader, through
-    /// <see cref="RibbonStrings.ContextualTabNameFormat"/>.
+    /// hidden and shown again never does. It also says so to a screen reader, through the
+    /// <c>RibbonContextualTabNameFormat</c> resource key - see <see cref="Ribbon.TextResourceKeys"/>.
     /// </para>
     /// <para>
     /// What switches it on and off is <see cref="IsActive"/>. This says what kind of tab it is, and

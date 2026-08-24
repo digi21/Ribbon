@@ -52,8 +52,9 @@ public partial class RibbonContextualGroup : DependencyObject
     /// <summary>Gets or sets the name on the band, already in the user's language.</summary>
     /// <remarks>
     /// Read out as part of what each tab of the group announces itself as, through
-    /// <see cref="RibbonStrings.ContextualTabInGroupNameFormat"/>: the band says these tabs belong
-    /// together only to somebody looking at the strip.
+    /// the <c>RibbonContextualTabInGroupNameFormat</c> resource key: the band says these
+    /// tabs belong together only to somebody looking at the strip. <see cref="Ribbon.TextResourceKeys"/>
+    /// is the list of those keys.
     /// </remarks>
     public string Label
     {

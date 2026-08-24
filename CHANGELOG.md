@@ -7,8 +7,53 @@ project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing yet. The repository builds as `1.0.1-dev.N`, where `N` is the number of commits since the
-last tag.
+The next release is **2.0.0**: the one entry below is a breaking change, and the repository builds as
+`1.0.1-dev.N` until the tag that says otherwise.
+
+### Changed
+
+- **The sentences the ribbon says on its own account are resource keys.** All eight of them —
+  `RibbonGroupLauncherNameFormat`, `RibbonCollapsedGroupNameFormat`, `RibbonContextualTabNameFormat`,
+  `RibbonContextualTabInGroupNameFormat`, `RibbonMinimizeRibbonName`, `RibbonExpandRibbonName`,
+  `RibbonSimplifyRibbonName` and `RibbonFullRibbonName` — are declared in
+  `Themes/RibbonResources.xaml` with their English as the default, beside the brushes and the
+  metrics. Translating the ribbon is now the same act as recolouring it: redeclare a key in the
+  application's resources, in XAML or from code. One mechanism for everything this library lets an
+  application change, and nothing to remember to call before the first ribbon exists.
+
+  Each is read where it is said rather than held from the moment a control was built, so a key
+  declared into a ribbon that is already on screen is heard the next time that ribbon says anything —
+  the chevron when it turns over, a group when it folds, a contextual tab whenever a screen reader
+  asks. What an application declares wins over the library's default whether it was declared before
+  the first ribbon was built or long afterwards; `STRINGS` in the harness measures both orderings.
+
+- What a contextual tab announces itself as is composed by its automation peer rather than written
+  into `AutomationProperties.Name` when the strip is built. A tab that comes and goes exists from the
+  moment the ribbon builds its strip, which is usually long before it is ever on it, and a sentence
+  written in at that moment is a sentence from before the application had said anything.
+
+### Removed
+
+- **`RibbonStrings`.** Eight settable static properties, replaced by the eight keys above. A static
+  is one variable for a whole process, so a host with two plug-ins using this library had one set of
+  sentences between them and whichever wrote last won; a resource entry belongs to an application.
+  The reason the class gave for being static — that the text is built where there is no control to
+  ask — does not hold: a resource lookup needs no control, and `Application.Current.Resources` is
+  reachable from exactly that kind of code.
+
+  There is no shim. Writing into the dictionary from a property would leave two ways to do one thing,
+  which is what this change is for.
+
+### Added
+
+- `Ribbon.TextResourceKeys`, the eight keys in the order the guide lists them. This is the answer to
+  the one respect in which a key is worse than a property: a mistyped property does not compile,
+  while a mistyped key is an entry nobody reads and a sentence that quietly goes on being said in
+  English — which, for eight sentences of which three are only ever heard by a screen reader and the
+  rest are a tooltip, is a
+  regression nobody notices for a long time. An application that drives its translations from this
+  list rather than typing the eight names out again turns a key renamed here into an exception at
+  startup. One read-only member in place of eight settable ones.
 
 ## [1.0.0] - 2026-08-22
 

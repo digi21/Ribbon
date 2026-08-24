@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Globalization;
 using Digi21.WinUI.Ribbon.Layout;
 using Digi21.WinUI.Ribbon.Primitives;
 using Microsoft.UI.Xaml;
@@ -533,7 +532,7 @@ public partial class RibbonGroup : Control
 
         if (collapsedButton is not null)
         {
-            AutomationProperties.SetName(collapsedButton, string.Format(CultureInfo.CurrentCulture, RibbonStrings.CollapsedGroupNameFormat, Label));
+            AutomationProperties.SetName(collapsedButton, RibbonText.Format(RibbonText.CollapsedGroupNameFormat, Label));
         }
 
         if (launcher is not null)
@@ -543,7 +542,7 @@ public partial class RibbonGroup : Control
 
             // Every launcher looks the same and does something different, so the group's name is the
             // only thing that tells one from another to anybody not looking at the screen.
-            AutomationProperties.SetName(launcher, string.Format(CultureInfo.CurrentCulture, RibbonStrings.GroupLauncherNameFormat, Label));
+            AutomationProperties.SetName(launcher, RibbonText.Format(RibbonText.GroupLauncherNameFormat, Label));
             ToolTipService.SetToolTip(launcher, AutomationProperties.GetName(launcher));
         }
 

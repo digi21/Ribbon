@@ -4,8 +4,10 @@ The ribbon follows the light, dark and high-contrast themes with no setup at all
 colour it paints with is an alias of a WinUI system brush. It follows the accent colour for the same
 reason.
 
-Recolouring it means redefining a key. Retemplating is only for changing the *shape* of a control,
-and there is a short list at the end of things that are not keys and cannot be moved.
+Recolouring it means redefining a key. So does remeasuring it, and so does translating the handful of
+things it says on its own account: one mechanism for everything this library lets an application
+change. Retemplating is only for changing the *shape* of a control, and there is a short list at the
+end of things that are not keys and cannot be moved.
 
 ## Where to put an override
 
@@ -91,6 +93,64 @@ whole of the marking, which is what the application this library was written for
 
 Metrics go in the root of the dictionary rather than in a theme dictionary, because they are the same
 in every theme.
+
+## The sentences
+
+The ribbon says eight things on its own account, and each of them is a key like the ones above. It
+does not translate what you put in it — the name of a tab, of a group, of an item is yours and
+arrives already in the user's language, because only your application knows what it is saying — so
+these eight are the whole of what there is to translate.
+
+| Key | Default | Is |
+| --- | --- | --- |
+| `RibbonGroupLauncherNameFormat` | `{0} options` | What the small button beside a group's name announces itself as. Takes the group's name: every launcher looks the same and does something different, so the name is the only thing that tells them apart to somebody not looking at the screen. |
+| `RibbonCollapsedGroupNameFormat` | `{0}, collapsed group` | What the button a folded group becomes announces itself as. Takes the group's name. |
+| `RibbonContextualTabNameFormat` | `{0}, contextual tab` | What a tab that comes and goes announces itself as. Takes the tab's name: the accent line above it says it is one only to somebody looking at the strip. |
+| `RibbonContextualTabInGroupNameFormat` | `{0}, contextual tab, {1}` | The same for a tab under a coloured band. Takes the tab's name and then the heading's, because the band is what says what a set of tabs is for and it says it by being drawn. |
+| `RibbonMinimizeRibbonName` | `Minimise the ribbon` | The chevron, where pressing it puts the ribbon away. |
+| `RibbonExpandRibbonName` | `Expand the ribbon` | The same chevron once it has. |
+| `RibbonSimplifyRibbonName` | `Simplify the ribbon` | The chevron, where pressing it drops the ribbon to one row instead. |
+| `RibbonFullRibbonName` | `Show the full ribbon` | The same chevron once it has. |
+
+```xml
+<x:String x:Key="RibbonCollapsedGroupNameFormat">{0}, grupo plegado</x:String>
+```
+
+Sentences go in the root of the dictionary rather than in a theme dictionary, as the metrics do: a
+ribbon does not say a different thing in the dark.
+
+Three things are worth knowing about them, and the last one is the reason this list is also available
+from code.
+
+**A placeholder at the start is written as it stands.** WPF would read the opening brace as the
+beginning of a markup extension and want `{}` in front of it; WinUI reads the content of an
+`x:String` literally, and the escape it does not know is a parse error that takes the application
+down before its first window.
+
+**They are read when they are said, not when the ribbon is built.** Declare one whenever you like —
+in `App.xaml`, in `OnLaunched`, or into `Application.Current.Resources` an hour after the window
+opened. What is already on screen picks the new wording up the next time it says anything: the
+chevron when it turns over, a group when it folds, a contextual tab whenever a screen reader asks.
+
+**A mistyped key is silent**, which is the one way a key is worse than a property somebody could have
+mistyped and failed to compile. An entry nobody reads is not an error, and the sentence goes on being
+said in English — which, for eight sentences of which three are only ever heard and the rest are a
+tooltip, is a regression nobody notices for a long time. `Ribbon.TextResourceKeys` is the list above, in that order, so that an
+application need not type the names out twice:
+
+```csharp
+foreach (string key in Ribbon.TextResourceKeys)
+{
+    Application.Current.Resources[key] = translations[key];
+}
+```
+
+Driven that way, a key this library renames is a missing entry in your own table and an exception at
+startup rather than a sentence that quietly reverts. Declaring them in XAML instead, the same
+assertion is one loop at startup: every key you declared is in that list, and every key in that list
+you declared.
+
+[localisation.md](localisation.md) has all eight in nine languages.
 
 ## Motion
 

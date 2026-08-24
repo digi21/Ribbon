@@ -1,12 +1,11 @@
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Xunit;
 
 namespace Digi21.WinUI.Ribbon.Tests;
 
-// Keeps docs/localisation.md and RibbonStrings from drifting apart.
+// Keeps docs/localisation.md and the keys the ribbon reads from drifting apart.
 //
-// The guide is a file nothing compiles, so a property added to the class arrives untranslated in
+// The guide is a file nothing compiles, so a sentence added to the library arrives untranslated in
 // nine languages and nobody notices until somebody who cannot see the screen is read a blank. These
 // tests are what make that a red build instead.
 //
@@ -26,36 +25,36 @@ public class LocalisationTests
     public static TheoryData<string> EveryLanguage => [.. Languages];
 
     [Fact]
-    public void EveryStringOfTheClassIsInTheGuide()
+    public void EveryKeyTheRibbonReadsIsInTheGuide()
     {
-        foreach (string name in Strings())
+        foreach (string key in RibbonText.Keys)
         {
-            Assert.Contains($"RibbonStrings.{name} =", Guide, StringComparison.Ordinal);
+            Assert.Contains(Entry(key), Guide, StringComparison.Ordinal);
         }
     }
 
     [Fact]
-    public void TheGuideInventsNoStringTheClassDoesNotHave()
+    public void TheGuideInventsNoKeyTheRibbonDoesNotRead()
     {
-        var known = Strings().ToHashSet(StringComparer.Ordinal);
-
-        foreach (Match mentioned in Regex.Matches(Guide, @"RibbonStrings\.(\w+) ="))
+        // A key the guide has and the library does not is nine translations of a sentence nobody
+        // will ever hear, and it reads exactly like the eight beside it.
+        foreach (Match mentioned in Regex.Matches(Guide, @"<x:String x:Key=""(\w+)"">"))
         {
-            Assert.Contains(mentioned.Groups[1].Value, known);
+            Assert.Contains(mentioned.Groups[1].Value, RibbonText.Keys);
         }
     }
 
     [Theory]
     [MemberData(nameof(EveryLanguage))]
-    public void EveryLanguageSetsEveryString(string language)
+    public void EveryLanguageSetsEveryKey(string language)
     {
         string section = Section(language);
 
-        foreach (string name in Strings())
+        foreach (string key in RibbonText.Keys)
         {
             Assert.True(
-                section.Contains($"RibbonStrings.{name} =", StringComparison.Ordinal),
-                $"'{language}' does not set {name}");
+                section.Contains(Entry(key), StringComparison.Ordinal),
+                $"'{language}' does not set {key}");
         }
     }
 
@@ -68,46 +67,61 @@ public class LocalisationTests
         // a review.
         string section = Section(language);
 
-        foreach (PropertyInfo property in Properties().Where(property => property.Name.EndsWith("Format", StringComparison.Ordinal)))
+        foreach (string key in RibbonText.Keys.Where(key => key.EndsWith("Format", StringComparison.Ordinal)))
         {
-            Match assignment = Regex.Match(section, $@"RibbonStrings\.{property.Name} = ""([^""]*)"";");
+            Match declaration = Regex.Match(section, $@"{Entry(key)}([^<]*)</x:String>");
 
-            Assert.True(assignment.Success, $"'{language}' does not set {property.Name}");
+            Assert.True(declaration.Success, $"'{language}' does not set {key}");
 
             // Which placeholders a sentence needs is read off the sentence itself rather than
             // assumed to be one: what a contextual tab in a group announces takes the tab's name and
             // the heading's, and a translation that keeps the first and drops the second reads
             // perfectly well and leaves out the half that groups it.
-            foreach (Match placeholder in Regex.Matches((string)property.GetValue(null)!, @"\{\d+\}"))
+            foreach (Match placeholder in Regex.Matches(RibbonText.Fallback(key), @"\{\d+\}"))
             {
                 Assert.True(
-                    assignment.Groups[1].Value.Contains(placeholder.Value, StringComparison.Ordinal),
-                    $"'{language}' drops {placeholder.Value} from {property.Name}");
+                    declaration.Groups[1].Value.Contains(placeholder.Value, StringComparison.Ordinal),
+                    $"'{language}' drops {placeholder.Value} from {key}");
             }
         }
     }
 
-    [Fact]
-    public void TheClassStartsInEnglish()
+    [Theory]
+    [MemberData(nameof(EveryLanguage))]
+    public void NoTranslationCarriesTheEscapeWpfWouldWant(string language)
     {
-        // The defaults are what an application that never sets any of these shows, so they have to
-        // be the English of the guide rather than a placeholder nobody translated.
-        string english = Section("en");
+        // The one way a translation of these can fail before anybody hears it: WPF reads an opening
+        // brace in a value as the beginning of a markup extension and wants {} in front of one, and
+        // a translator who knows that writes it. WinUI reads the content of an x:String literally,
+        // and the escape it does not know takes the application down before its first window.
+        string section = Section(language);
 
-        foreach (PropertyInfo property in Properties())
+        foreach (Match declaration in Regex.Matches(section, @"<x:String x:Key=""\w+"">([^<]*)</x:String>"))
         {
-            string value = (string)property.GetValue(null)!;
-
-            Assert.True(
-                english.Contains($@"RibbonStrings.{property.Name} = ""{value}"";", StringComparison.Ordinal),
-                $"the default of {property.Name} is \"{value}\", which the English section does not say");
+            Assert.False(
+                declaration.Groups[1].Value.StartsWith("{}", StringComparison.Ordinal),
+                $"'{language}' writes the escape WinUI cannot parse: '{declaration.Groups[1].Value}'");
         }
     }
 
-    private static IEnumerable<string> Strings() => Properties().Select(property => property.Name);
+    [Fact]
+    public void TheLibraryStartsInEnglish()
+    {
+        // The defaults are what an application that declares none of these shows, so they have to be
+        // the English of the guide rather than a placeholder nobody translated.
+        string english = Section("en");
 
-    private static PropertyInfo[] Properties() =>
-        typeof(RibbonStrings).GetProperties(BindingFlags.Public | BindingFlags.Static);
+        foreach (string key in RibbonText.Keys)
+        {
+            string value = RibbonText.Fallback(key);
+
+            Assert.True(
+                english.Contains($"{Entry(key)}{value}</x:String>", StringComparison.Ordinal),
+                $"the default of {key} is \"{value}\", which the English section does not say");
+        }
+    }
+
+    private static string Entry(string key) => $@"<x:String x:Key=""{key}"">";
 
     // Everything under one language's heading, up to the next heading.
     private static string Section(string language)

@@ -187,6 +187,37 @@ public partial class Ribbon : Control
     /// <summary>Occurs when a tab leaves the strip, after the ribbon has decided which tab is showing instead.</summary>
     public event TypedEventHandler<Ribbon, RibbonTab>? TabDeactivated;
 
+    /// <summary>Gets the resource keys of every sentence the ribbon says on its own account.</summary>
+    /// <remarks>
+    /// <para>
+    /// The ribbon does not translate what an application puts in it: the name of a tab, of a group or
+    /// of an item is the application's, and arrives already in the user's language, because only the
+    /// application knows what it is saying. What is here is the handful of things the ribbon says by
+    /// itself - what a screen reader is told the launcher of a group does, what the button a folded
+    /// group becomes is called - and each of them is an entry in the application's resources, beside
+    /// the brushes and the metrics this library reads from the same place.
+    /// </para>
+    /// <para>
+    /// The list is here because a mistyped key is silent. A key nobody reads is an entry that simply
+    /// sits there, and the sentence goes on being said in English - which, for eight sentences of
+    /// which three are only ever heard by a screen reader and the rest are a tooltip, is a
+    /// regression nobody notices for a very long time. Driving the translations from this list rather than from eight names typed out
+    /// again is what turns that into an error where it can be seen:
+    /// </para>
+    /// <code>
+    /// foreach (string key in Ribbon.TextResourceKeys)
+    /// {
+    ///     Application.Current.Resources[key] = translations[key];
+    /// }
+    /// </code>
+    /// <para>
+    /// An application that would rather declare them in XAML, next to the brushes, can assert the
+    /// same thing at startup: every key it declared is in this list, and every key in this list it
+    /// declared.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlyList<string> TextResourceKeys => RibbonText.Keys;
+
     /// <summary>Gets the tabs, in the order they are shown.</summary>
     /// <remarks>
     /// <para>
@@ -447,10 +478,10 @@ public partial class Ribbon : Control
         {
             expand = found;
 
-            // Only ever one thing, so it needs no glyph swapping and no second sentence.
+            // Only ever one thing, so it needs no glyph swapping and no second sentence. What it
+            // says is written where it is shown rather than here, so that it is composed as often as
+            // the chevron's is and an application declaring its own wording later is heard.
             expand.Click += (_, _) => IsMinimized = false;
-            AutomationProperties.SetName(expand, RibbonStrings.ExpandRibbonName);
-            ToolTipService.SetToolTip(expand, RibbonStrings.ExpandRibbonName);
         }
 
         if (overlay is not null)
@@ -788,8 +819,8 @@ public partial class Ribbon : Control
         }
 
         string name = CollapseBehavior == RibbonCollapseBehavior.Minimize
-            ? collapsed ? RibbonStrings.ExpandRibbonName : RibbonStrings.MinimizeRibbonName
-            : collapsed ? RibbonStrings.FullRibbonName : RibbonStrings.SimplifyRibbonName;
+            ? collapsed ? RibbonText.Get(RibbonText.ExpandRibbonName) : RibbonText.Get(RibbonText.MinimizeRibbonName)
+            : collapsed ? RibbonText.Get(RibbonText.FullRibbonName) : RibbonText.Get(RibbonText.SimplifyRibbonName);
 
         AutomationProperties.SetName(minimize, name);
         ToolTipService.SetToolTip(minimize, name);
@@ -813,6 +844,11 @@ public partial class Ribbon : Control
         if (expand is not null)
         {
             expand.Visibility = IsMinimized ? Visibility.Visible : Visibility.Collapsed;
+
+            string away = RibbonText.Get(RibbonText.ExpandRibbonName);
+
+            AutomationProperties.SetName(expand, away);
+            ToolTipService.SetToolTip(expand, away);
         }
     }
 

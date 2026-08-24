@@ -66,6 +66,18 @@ public partial class RibbonTabHeaderAutomationPeer : FrameworkElementAutomationP
         throw new InvalidOperationException("A ribbon shows the tab that is chosen, so a tab cannot be deselected on its own.");
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Composed here, each time it is asked for, rather than written into the header's
+    /// <c>AutomationProperties.Name</c> when the strip was built. What a contextual tab announces
+    /// itself as is a sentence the application owns - <c>RibbonContextualTabNameFormat</c>, or
+    /// <c>RibbonContextualTabInGroupNameFormat</c> for a tab under a coloured band - and a header
+    /// exists from the moment the ribbon builds its strip, which for a tab that comes and goes is
+    /// long before it is ever on it. Asking at the moment somebody is listening is what lets an
+    /// application declare its own wording whenever it likes.
+    /// </remarks>
+    protected override string GetNameCore() => Header.AutomationName;
+
+    /// <inheritdoc/>
     protected override AutomationControlType GetAutomationControlTypeCore() => AutomationControlType.TabItem;
 
     /// <inheritdoc/>

@@ -18,11 +18,15 @@
 
   <ItemGroup>
     <!--
-      The translation guide is a file nothing compiles, so a string added to RibbonStrings would
-      arrive untranslated in nine languages with nothing to say so. Copying it beside the tests is
-      what lets LocalisationTests read it and make that a red build.
+      Two files nothing compiles, both of which have to keep step with the keys the ribbon reads.
+
+      The translation guide is where a key added to the library would otherwise arrive untranslated
+      in nine languages with nothing to say so; the library's own dictionary is where the English
+      default of each of them lives, beside the brushes. Copying them beside the tests is what lets
+      LocalisationTests and RibbonTextTests read them, and makes either drift a red build.
     -->
     <None Include="..\..\docs\localisation.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\src\Digi21.WinUI.Ribbon\Themes\RibbonResources.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

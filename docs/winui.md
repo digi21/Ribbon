@@ -77,3 +77,19 @@ An element that wants more room than it was offered reports exactly what it was 
 overflowing its window cannot be detected by asking it how wide it wants to be; where the overflow is
 visible is the far side of the last thing arranged, which an arrange puts wherever the widths add up
 to.
+
+## The `{}` escape is a parse error, not an escape
+
+A XAML value that has to start with a literal opening brace is written `{}` first in WPF, because
+the parser would otherwise read the brace as the beginning of a markup extension. WinUI does not
+know that escape. It also does not need it inside an `x:String`, whose content it reads literally:
+
+```xml
+<x:String x:Key="RibbonCollapsedGroupNameFormat">{0}, collapsed group</x:String>
+```
+
+Written the WPF way instead, that line takes the application down at startup with a stowed exception
+— the dictionary cannot be parsed, so the merge fails before the first window is ever shown, and
+there is no managed stack to read afterwards. It cost an afternoon here, and the four defaults it
+would apply to are all automation names, so a translation written that way by somebody who knows WPF
+breaks an application that has nothing else wrong with it.

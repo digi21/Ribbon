@@ -1,7 +1,8 @@
 <!--
-    Every brush and metric the ribbon is painted with. Recolouring the library means redefining these
-    keys in the application's resources; retemplating is only needed to change the shape of a
-    control, not its colours.
+    Every brush and metric the ribbon is painted with, and every sentence it says on its own account.
+    Recolouring the library, remeasuring it and translating it are all the same thing: redefining a
+    key in the application's resources. Retemplating is only for changing the shape of a control,
+    neither its colours nor its words.
 
     This dictionary is merged into Application.Resources (see RibbonThemeResources), and not into
     Themes/Generic.xaml, on purpose: a key defined in the same dictionary as the template that uses
@@ -103,5 +104,28 @@
     <CornerRadius x:Key="RibbonTabCornerRadius">4,4,0,0</CornerRadius>
     <CornerRadius x:Key="RibbonItemCornerRadius">4</CornerRadius>
     <Thickness x:Key="RibbonTabPadding">12,6</Thickness>
+
+    <!-- Every sentence the ribbon says on its own account. The ribbon does not translate what an
+         application puts in it - the name of a tab, of a group, of an item arrives already in the
+         user's language, because only the application knows what it is saying - so what is here is
+         the handful of things the ribbon says by itself. Three of the eight are only ever heard; the
+         other five are a tooltip as well.
+
+         A placeholder at the start of one of these is written as it stands. WPF would read an
+         opening brace there as the start of a markup extension and want the {} escape in front of
+         it; WinUI reads the content of an x:String literally, and the escape it does not know is a
+         parse error that takes the application down before its first window.
+
+         Ribbon.TextResourceKeys is this list, so that an application can drive its own translations
+         from it rather than copying the eight names and finding out years later that it mistyped
+         one. -->
+    <x:String x:Key="RibbonGroupLauncherNameFormat">{0} options</x:String>
+    <x:String x:Key="RibbonCollapsedGroupNameFormat">{0}, collapsed group</x:String>
+    <x:String x:Key="RibbonContextualTabNameFormat">{0}, contextual tab</x:String>
+    <x:String x:Key="RibbonContextualTabInGroupNameFormat">{0}, contextual tab, {1}</x:String>
+    <x:String x:Key="RibbonMinimizeRibbonName">Minimise the ribbon</x:String>
+    <x:String x:Key="RibbonExpandRibbonName">Expand the ribbon</x:String>
+    <x:String x:Key="RibbonSimplifyRibbonName">Simplify the ribbon</x:String>
+    <x:String x:Key="RibbonFullRibbonName">Show the full ribbon</x:String>
 
 </ResourceDictionary>

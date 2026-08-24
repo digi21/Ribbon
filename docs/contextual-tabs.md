@@ -114,8 +114,8 @@ an exception.
 The point is that a test can find out what happened without polling the visual tree.
 
 - Every tab header answers to `TabItem`, with `InvokePattern` and `SelectionItemPattern`, contextual
-  or not. A contextual tab's `AutomationProperties.Name` is `RibbonStrings.ContextualTabNameFormat`
-  around its label — `"Table, contextual tab"` out of the box, and in nine languages in
+  or not. What a contextual tab announces itself as is the `RibbonContextualTabNameFormat`
+  resource key around its label — `"Table, contextual tab"` out of the box, and in nine languages in
   [localisation.md](localisation.md).
 - A tab that is not active has a **collapsed** header, which puts it out of the automation tree
   entirely. A driver cannot find it, rather than finding it and being unable to press it.
@@ -206,8 +206,8 @@ is the trade, and it is the one worth making — a name nobody can read is not a
 
 ### What a screen reader is told
 
-A tab in a group announces itself through `RibbonStrings.ContextualTabInGroupNameFormat`, which takes
-the tab's name and then the heading's — `"Picture, contextual tab, Picture tools"` out of the box, and
+A tab in a group announces itself through the `RibbonContextualTabInGroupNameFormat` resource key,
+which takes the tab's name and then the heading's — `"Picture, contextual tab, Picture tools"` out of the box, and
 in nine languages in [localisation.md](localisation.md). A tab that announced only its own name would
 leave out exactly the half the band adds, and the band itself is out of the automation tree, because
 saying it twice is worse than saying it once for somebody who cannot see that the two are the same

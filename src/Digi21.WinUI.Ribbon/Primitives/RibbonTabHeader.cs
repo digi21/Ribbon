@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Automation.Peers;
@@ -51,6 +50,10 @@ public partial class RibbonTabHeader : ButtonBase
     private RibbonContextualGroup? group;
     private bool pointerOver;
     private bool pressed;
+
+    // The sentence this tab last announced, kept only so that a change can be told apart from a
+    // recomposition of the same words.
+    private string announced = string.Empty;
 
     /// <summary>Initializes a new instance of the <see cref="RibbonTabHeader"/> class.</summary>
     public RibbonTabHeader()
@@ -113,6 +116,27 @@ public partial class RibbonTabHeader : ButtonBase
             UpdateAutomationName();
         }
     }
+
+    // What a screen reader is told this tab is called. A contextual tab says so, for the same reason
+    // a folded group does: what is worth knowing about it is not only its name but that it is here
+    // now and was not a moment ago, and that is invisible to somebody who cannot see the strip change
+    // length.
+    //
+    // Three sentences rather than two, because the band over a set of contextual tabs is the part
+    // that says what they are all for - "Selection tools" over Actions and Format - and it is drawn,
+    // which means it is said to nobody who cannot see the strip. A tab in a group that announced
+    // only its own name would leave out the half that groups it.
+    internal string AutomationName => (IsContextual, group) switch
+    {
+        (true, { } inGroup) => RibbonText.Format(
+            RibbonText.ContextualTabInGroupNameFormat,
+            Label,
+            inGroup.Label),
+
+        (true, null) => RibbonText.Format(RibbonText.ContextualTabNameFormat, Label),
+
+        _ => Label,
+    };
 
     internal RibbonTab? Tab { get; set; }
 
@@ -237,29 +261,29 @@ public partial class RibbonTabHeader : ButtonBase
         VisualStateManager.GoToState(this, IsContextual ? "Contextual" : "Fixed", useTransitions);
     }
 
-    // What a screen reader is told this tab is called. A contextual tab says so, for the same reason
-    // a folded group does: what is worth knowing about it is not only its name but that it is here
-    // now and was not a moment ago, and that is invisible to somebody who cannot see the strip change
-    // length.
+    // Composed each time it is asked for rather than written into AutomationProperties.Name once,
+    // which is what lets an application declare its own wording after this header was built: a
+    // contextual tab is made when the ribbon builds its strip and lives there whether it is on the
+    // strip or off it, so a sentence written in at that moment is a sentence from before the
+    // application had said anything.
     private void UpdateAutomationName()
     {
-        // Three sentences rather than two, because the band over a set of contextual tabs is the
-        // part that says what they are all for - "Selection tools" over Actions and Format - and it
-        // is drawn, which means it is said to nobody who cannot see the strip. A tab in a group that
-        // announced only its own name would leave out the half that groups it.
-        string name = (IsContextual, group) switch
+        // Only to say that it changed. What it changed to is the peer's answer, and a screen reader
+        // reading this tab at the moment its name changes has to be told, or it goes on reading the
+        // one it was given.
+        string name = AutomationName;
+
+        if (string.Equals(name, announced, StringComparison.Ordinal))
         {
-            (true, { } inGroup) => string.Format(
-                CultureInfo.CurrentCulture,
-                RibbonStrings.ContextualTabInGroupNameFormat,
-                Label,
-                inGroup.Label),
+            return;
+        }
 
-            (true, null) => string.Format(CultureInfo.CurrentCulture, RibbonStrings.ContextualTabNameFormat, Label),
+        string was = announced;
+        announced = name;
 
-            _ => Label,
-        };
-
-        AutomationProperties.SetName(this, name);
+        if (FrameworkElementAutomationPeer.FromElement(this) is { } peer)
+        {
+            peer.RaisePropertyChangedEvent(AutomationElementIdentifiers.NameProperty, was, name);
+        }
     }
 }

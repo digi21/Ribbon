@@ -104,7 +104,8 @@ what the library is measured against:
   [docs/keyboard.md](https://github.com/digi21/Ribbon/blob/main/docs/keyboard.md) is the table.
 - **Correct at 100 %, 125 %, 150 % and 200 %.**
 - **The consumer supplies the text, already translated.** The library does not translate ribbon
-  content; only its own internal strings, which ship in nine languages.
+  content; only the eight sentences it says on its own account, which are resource keys like its
+  brushes and ship in nine languages.
 
 ## Requirements
 
@@ -238,16 +239,28 @@ keys, where an override has to go, how to retemplate a control, and what is deli
 The ribbon does not translate what you put in it: the name of a tab, of a group, of an item is yours
 and arrives already in the user's language, because only your application knows what it is saying.
 
-What the ribbon says on its own account is seven sentences, and three of them are never seen — they
-are what a screen reader is told about a group's launcher, about the button a folded group becomes,
-and about a contextual tab. They are properties on `RibbonStrings`, set once from wherever you keep
-your translations:
+What the ribbon says on its own account is eight sentences, and three of them are never seen — they
+are what a screen reader is told about the button a folded group becomes, and about a contextual tab
+with and without a coloured band over it. Each of the eight is a resource key, declared where the
+brushes are declared:
 
-```csharp
-RibbonStrings.GroupLauncherNameFormat = "Opciones de {0}";
+```xml
+<x:String x:Key="RibbonCollapsedGroupNameFormat">{0}, grupo plegado</x:String>
 ```
 
-[docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all seven
+Declare one whenever you like, in XAML or in code — a ribbon already on screen picks the new wording
+up the next time it says anything, because each sentence is read where it is said rather than held
+from the moment a control was built. `Ribbon.TextResourceKeys` is the list of the eight, so that a
+key renamed here is an exception at startup rather than a sentence that quietly reverts to English:
+
+```csharp
+foreach (string key in Ribbon.TextResourceKeys)
+{
+    Application.Current.Resources[key] = translations[key];
+}
+```
+
+[docs/localisation.md](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) has all eight
 in Catalan, English, Basque, French, Galician, German, Italian, Portuguese and Spanish, each using
 the word Office uses in that language rather than a translation of the English one.
 
@@ -262,9 +275,9 @@ the word Office uses in that language rather than a translation of the English o
 - [The keyboard](https://github.com/digi21/Ribbon/blob/main/docs/keyboard.md) — one stop for the
   whole ribbon and the arrow keys inside it: every key in a table, why `Tab` does not walk the
   commands, and how to get out of a control that has taken the arrows for itself.
-- [Theming](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) — every brush and metric key,
-  and what is deliberately not one.
-- [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the four
+- [Theming](https://github.com/digi21/Ribbon/blob/main/docs/theming.md) — every brush, metric and
+  sentence key, and what is deliberately not one.
+- [Translations](https://github.com/digi21/Ribbon/blob/main/docs/localisation.md) — the eight
   sentences the ribbon says on its own account, in nine languages.
 - [What WinUI cost this library](https://github.com/digi21/Ribbon/blob/main/docs/winui.md) — the
   things that are not guessable, fail quietly, and each cost an afternoon. Worth reading before
