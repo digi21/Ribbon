@@ -311,7 +311,12 @@ public partial class Ribbon
         // Nobody came in from anywhere - the application put the focus here, or the page it came
         // from has gone since. The focus is handed on to whatever follows the ribbon, which is the
         // journey Tab would have made and lands in the same place.
-        return FocusManager.TryMoveFocus(FocusNavigationDirection.Next);
+        //
+        // With a search root, because the overload without options throws in a desktop app: it was
+        // written for a CoreWindow, and in a window built on an island there is no one window it
+        // could mean, so WinUI refuses with "Catastrophic failure" rather than guess.
+        return XamlRoot?.Content is { } root
+            && FocusManager.TryMoveFocus(FocusNavigationDirection.Next, new FindNextElementOptions { SearchRoot = root });
     }
 
     // Which header is the tab on show, and which one the keyboard is allowed to stand on.

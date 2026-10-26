@@ -78,6 +78,18 @@ overflowing its window cannot be detected by asking it how wide it wants to be; 
 visible is the far side of the last thing arranged, which an arrange puts wherever the widths add up
 to.
 
+## `TryMoveFocus` without options throws in a desktop app
+
+`FocusManager.TryMoveFocus(FocusNavigationDirection)` was written for a `CoreWindow`, and a desktop
+app built on islands has none: there is no one window the call could mean. Rather than guess, WinUI
+throws `E_UNEXPECTED` — "Catastrophic failure", with the hint "the app must call
+TryMoveFocus/TryMoveFocusAsync overload with the FindNextElementOptions parameter" — out of whatever
+key handler made the call, which takes the window down. The overload that takes a
+`FindNextElementOptions` with a `SearchRoot`, usually `XamlRoot.Content`, works.
+
+It compiles, and it only runs on a fallback path, so it survived until somebody pressed `Esc` on a
+tab they had clicked: the one way into the ribbon that does not tell it where the focus came from.
+
 ## The `{}` escape is a parse error, not an escape
 
 A XAML value that has to start with a literal opening brace is written `{}` first in WPF, because

@@ -55,6 +55,13 @@ The next release is **2.0.0**: the one entry below is a breaking change, and the
   list rather than typing the eight names out again turns a key renamed here into an exception at
   startup. One read-only member in place of eight settable ones.
 
+### Fixed
+
+- Esc on the strip of tab names threw "Catastrophic failure" whenever the focus had nowhere to go
+  back to - a tab reached with a click, or a page that had been unloaded since. The fallback moved
+  the focus on with the overload of `FocusManager.TryMoveFocus` that takes no options, which WinUI
+  refuses in a desktop app; it now passes the window's content as the search root.
+
 ## [1.0.0] - 2026-08-22
 
 First release. The API is stable: it took its final shape while the library was being built against a
