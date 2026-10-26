@@ -169,11 +169,34 @@
                     <ribbon:RibbonGroup.IconSource>
                         <SymbolIconSource Symbol="Link" />
                     </ribbon:RibbonGroup.IconSource>
-                    <ribbon:RibbonButton Label="Link">
-                        <ribbon:RibbonButton.IconSource>
+                    <!-- A split button: the icon inserts a link straight away, the chevron offers
+                         the other kinds of link. Each half has its own command, wired up in the
+                         code-behind, and Remove link stays greyed out until there is one. -->
+                    <ribbon:RibbonSplitButton x:Name="Link" Label="Link">
+                        <ribbon:RibbonSplitButton.IconSource>
                             <SymbolIconSource Symbol="Link" />
-                        </ribbon:RibbonButton.IconSource>
-                    </ribbon:RibbonButton>
+                        </ribbon:RibbonSplitButton.IconSource>
+                        <ribbon:RibbonSplitButton.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem x:Name="LinkToHeading" Text="Link to a heading">
+                                    <MenuFlyoutItem.Icon>
+                                        <SymbolIcon Symbol="Bookmarks" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem x:Name="LinkToEmail" Text="Email address">
+                                    <MenuFlyoutItem.Icon>
+                                        <SymbolIcon Symbol="Mail" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem x:Name="RemoveLink" Text="Remove link">
+                                    <MenuFlyoutItem.Icon>
+                                        <SymbolIcon Symbol="Delete" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </ribbon:RibbonSplitButton.Flyout>
+                    </ribbon:RibbonSplitButton>
                     <ribbon:RibbonButton Label="Bookmark">
                         <ribbon:RibbonButton.IconSource>
                             <SymbolIconSource Symbol="Bookmarks" />
@@ -355,6 +378,18 @@
                         Toggled="OnPictureSelected" />
                     <TextBlock x:Name="ContextualResult" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
+
+                <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Two halves" />
+
+                <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                    Link, on the Insert tab, is a split button. The icon is a command of its own and
+                    runs at once; the chevron opens the other kinds of link. Down or Alt+Down opens
+                    the menu from the keyboard and Esc puts it away again. Remove link is greyed out
+                    by its own command until there is a link to remove - and a command half that
+                    cannot run greys out alone, leaving the menu beside it working.
+                </TextBlock>
+
+                <TextBlock x:Name="LinkResult" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="No links yet" />
 
                 <TextBlock Style="{ThemeResource SubtitleTextBlockStyle}" Text="Built at run time" />
 

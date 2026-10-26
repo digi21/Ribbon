@@ -7,16 +7,16 @@ namespace Digi21.WinUI.Ribbon;
 /// <para>
 /// The item types have no base class between them: <see cref="RibbonButton"/> is a
 /// <see cref="Button"/>, <see cref="RibbonToggleButton"/> is a
-/// <see cref="Microsoft.UI.Xaml.Controls.Primitives.ToggleButton"/>, and each of them therefore
-/// arrives with the click behaviour, the keyboard handling and the automation peer that WinUI
-/// already gets right - an <c>InvokePattern</c> on the one and a <c>TogglePattern</c> on the other,
+/// <see cref="Microsoft.UI.Xaml.Controls.Primitives.ToggleButton"/>, <see cref="RibbonSplitButton"/>
+/// is a <see cref="SplitButton"/>, and each of them therefore arrives with the click behaviour, the
+/// keyboard handling and the automation peer that WinUI already gets right - an <c>InvokePattern</c> on the one and a <c>TogglePattern</c> on the other,
 /// which is what lets an application built on this ribbon be driven by a test rather than by screen
 /// coordinates. This interface is what they share instead, the way <c>ICommandBarElement</c> is what
 /// <c>AppBarButton</c> and <c>AppBarToggleButton</c> share.
 /// </para>
 /// <para>
 /// It is here so that an application walking its own ribbon to find a control does not need a
-/// <c>switch</c> over four types to read a label.
+/// <c>switch</c> over five types to read a label.
 /// </para>
 /// <para>
 /// A group can hold any <see cref="Microsoft.UI.Xaml.UIElement"/> at all, not only these: a

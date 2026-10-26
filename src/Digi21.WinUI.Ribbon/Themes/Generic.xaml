@@ -555,6 +555,139 @@
         </Setter>
     </Style>
 
+    <!--
+        One half of a split button: a surface to press and nothing on it. What the button shows is
+        drawn once, over both halves, by the content in the button's own template, because which half
+        the label belongs to depends on the shape and only the content knows the shape. The halves
+        draw the pointer states of an ordinary item under it, each over its own part.
+
+        No Disabled state: a half that cannot be used greys out its own part of the content, which is
+        not inside it to be greyed.
+    -->
+    <Style x:Key="RibbonSplitButtonHalfStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="UseSystemFocusVisuals" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border
+                        x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{ThemeResource RibbonItemCornerRadius}">
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPointerOverBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource RibbonItemPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="local:RibbonSplitButton">
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="IsTabStop" Value="True" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="CornerRadius" Value="{ThemeResource RibbonItemCornerRadius}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:RibbonSplitButton">
+                    <!--
+                        Two halves and one content over them. The content decides how big the item is;
+                        the halves are surfaces placed over it from code, from where the content puts
+                        its parts: the half that opens is the bottom of the item when it is drawn
+                        Large, and the end of it when it is not.
+
+                        On a canvas, because a canvas asks for no room whatever is on it. The halves are
+                        sized from the room the item was given, and anything that let that size back
+                        into what the item asks for would have an item stretched across a column ask
+                        for the width of the column the next time the layout measured it.
+
+                        PrimaryButton and SecondaryButton are the names SplitButton looks for: it
+                        listens to their clicks and their pointer states, and the template binds the
+                        command to the first so that CanExecute disables that half and no other.
+                    -->
+                    <Grid
+                        x:Name="Root"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                        <Canvas>
+                            <Button
+                                x:Name="PrimaryButton"
+                                AutomationProperties.AccessibilityView="Raw"
+                                Command="{TemplateBinding Command}"
+                                CommandParameter="{TemplateBinding CommandParameter}"
+                                Style="{StaticResource RibbonSplitButtonHalfStyle}" />
+
+                            <Button
+                                x:Name="SecondaryButton"
+                                AutomationProperties.AccessibilityView="Raw"
+                                Style="{StaticResource RibbonSplitButtonHalfStyle}" />
+                        </Canvas>
+
+                        <primitives:RibbonItemContent
+                            x:Name="PART_Content"
+                            IsHitTestVisible="False"
+                            ShowsChevron="True" />
+
+                        <VisualStateManager.VisualStateGroups>
+                            <!--
+                                Every state SplitButton goes to, because a state a template does not
+                                have is one it never leaves: the open menu would stay drawn as open.
+                                The pointer states are drawn by the halves themselves, so most of
+                                these say nothing; what only the button knows is that its menu is open.
+                            -->
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="Disabled" />
+                                <VisualState x:Name="FlyoutOpen">
+                                    <VisualState.Setters>
+                                        <Setter Target="SecondaryButton.Background" Value="{ThemeResource RibbonItemPressedBackgroundBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="TouchPressed" />
+                                <VisualState x:Name="PrimaryPointerOver" />
+                                <VisualState x:Name="PrimaryPressed" />
+                                <VisualState x:Name="SecondaryPointerOver" />
+                                <VisualState x:Name="SecondaryPressed" />
+                                <VisualState x:Name="Checked" />
+                                <VisualState x:Name="CheckedFlyoutOpen" />
+                                <VisualState x:Name="CheckedTouchPressed" />
+                                <VisualState x:Name="CheckedPrimaryPointerOver" />
+                                <VisualState x:Name="CheckedPrimaryPressed" />
+                                <VisualState x:Name="CheckedSecondaryPointerOver" />
+                                <VisualState x:Name="CheckedSecondaryPressed" />
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="SecondaryButtonPlacementStates">
+                                <VisualState x:Name="SecondaryButtonRight" />
+                                <VisualState x:Name="SecondaryButtonSpan" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="local:RibbonContentItem">
         <Setter Property="Template">
             <Setter.Value>

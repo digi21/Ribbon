@@ -114,6 +114,10 @@ public partial class Ribbon : Control
     private readonly List<RibbonTabHeader> headers = [];
     private readonly List<ButtonBase> invocations = [];
 
+    // The same, for the one item whose command half is not a ButtonBase of its own: a SplitButton is
+    // a ContentControl, with a Click of a different type.
+    private readonly List<SplitButton> splitInvocations = [];
+
     // The band over each set of contextual tabs, by the group it belongs to. One per group rather
     // than one per tab: what the band says is that these tabs are one thing.
     private readonly Dictionary<RibbonContextualGroup, RibbonContextualHeading> headings = [];
@@ -896,11 +900,21 @@ public partial class Ribbon : Control
                     button.Click += OnItemInvoked;
                     invocations.Add(button);
                 }
+                else if (item is SplitButton split)
+                {
+                    split.Click += OnSplitInvoked;
+                    splitInvocations.Add(split);
+                }
             }
         }
     }
 
     private void OnItemInvoked(object sender, RoutedEventArgs arguments)
+    {
+        CloseOverlay();
+    }
+
+    private void OnSplitInvoked(SplitButton sender, SplitButtonClickEventArgs arguments)
     {
         CloseOverlay();
     }
@@ -913,6 +927,13 @@ public partial class Ribbon : Control
         }
 
         invocations.Clear();
+
+        foreach (SplitButton split in splitInvocations)
+        {
+            split.Click -= OnSplitInvoked;
+        }
+
+        splitInvocations.Clear();
 
         // Home again, and collapsed if the ribbon is still minimised. Left in the popup it would be
         // a tab nobody can reach and a set of controls the application still holds references to.

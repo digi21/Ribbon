@@ -47,6 +47,13 @@ what the library is measured against:
   too; drop it in bare and give it an `AutomationProperties.Name` of your own, because there is then
   no label to borrow one from.
 - **A launcher button per group**, off by default, that opens a flyout when switched on.
+- **Split buttons**: `RibbonSplitButton` is a command with a menu of related ones beside it, declared
+  like every other item - a label, an icon, the three shapes - with its menu as a `MenuFlyout`, as on
+  `RibbonDropDownButton`. Drawn Large the icon is the command and the name with the chevron under it
+  opens the menu, as in Office. Each half greys out on its own: the command's `CanExecute` takes the
+  command half and leaves the menu, each menu item follows its own command, and `IsEnabled` takes
+  both. It is a WinUI `SplitButton`, so a driver finds `Invoke` for the command and `ExpandCollapse`
+  for the menu.
 - **One gesture for asking for less of it**: the chevron in the corner, a double-click on a tab, or
   `Ctrl+F1`. `CollapseBehavior` says what it means, and out of the box it means one row, not none:
   the commands are still there afterwards, because a chevron in a corner is easy to press by

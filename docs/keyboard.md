@@ -18,7 +18,8 @@ navigable as soon as it is on screen.
 | `↓` | on the tab strip | Into the commands, at the first one. A minimised ribbon opens the tab over the content first. |
 | `↑` | in the top row | Back to the tab strip. |
 | `←` `→` `↑` `↓` | on a command | The nearest command that way, across groups and into a folded group's button. |
-| `Space` `Enter` | on a command | Presses it. A drop-down opens; `Esc` closes it again. |
+| `Space` `Enter` | on a command | Presses it. A drop-down opens; `Esc` closes it again. A split button runs its command. |
+| `↓` `Alt+↓` | on a split button | Opens its menu, with the focus on the first item. `Esc` closes it and leaves the focus on the button. |
 | `Esc` | on a command | Back to the tab strip, and a tab opened over the content closes. |
 | `Esc` | on the tab strip | Out of the ribbon, back where the focus came from. |
 | `Ctrl+F1` | anywhere in the window | What the chevron does, which is [`CollapseBehavior`](../README.md#features). |

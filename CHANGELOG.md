@@ -60,6 +60,17 @@ The next release is **2.0.0**: the one entry below is a breaking change, and the
   panel they sit in - that panel is stretched across the ribbon, so its size says nothing about the
   tabs and its `SizeChanged` is silent when a contextual tab arrives. In a window too narrow for the
   tabs it still says what they need, which is the number to set a minimum window width from.
+- `RibbonSplitButton`: a command with a menu of related commands beside it. It derives from WinUI's
+  `SplitButton`, as the other items derive from the control that already behaves right, so `Command`,
+  `Click`, `Flyout` and the automation peer - `Invoke` for the command, `ExpandCollapse` for the menu -
+  are WinUI's. It takes a label, an icon and the three shapes like every other item, and its menu is a
+  `FlyoutBase`, as on `RibbonDropDownButton`: a `MenuFlyout` of `MenuFlyoutItem`s, each with its own
+  text, icon and command. Drawn Large, the icon is the command and the name with the chevron under it
+  opens the menu; drawn Normal or Small, the chevron at the end does. Enter and Space run the command,
+  Down and Alt+Down open the menu, and Esc closes it with the focus back on the button. The command's
+  `CanExecute` greys out the command half alone - and, unlike WinUI's own `SplitButton`, Enter then
+  does nothing rather than raising `Click` - while `IsEnabled` greys out both halves. Clicking the
+  command half closes a tab opened over the content, as any other command does.
 
 ### Fixed
 

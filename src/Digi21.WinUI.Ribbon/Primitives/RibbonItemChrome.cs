@@ -3,11 +3,11 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Digi21.WinUI.Ribbon.Primitives;
 
-// What the four item types would inherit if they could.
+// What the item types would inherit if they could.
 //
 // They cannot: each of them derives from the WinUI control that already gets its behaviour right -
-// Button, ToggleButton, DropDownButton - which is what brings the InvokePattern, the TogglePattern
-// and the keyboard handling with it. So the shared part is composed instead of inherited, exactly
+// Button, ToggleButton, DropDownButton, SplitButton - which is what brings the InvokePattern, the
+// TogglePattern and the keyboard handling with it. So the shared part is composed instead of inherited, exactly
 // as AppBarButton and AppBarToggleButton share ICommandBarElement and nothing else.
 //
 // Its whole job is to carry the label, the icon and the shape the layout chose into the item's

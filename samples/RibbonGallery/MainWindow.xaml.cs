@@ -1,6 +1,7 @@
 using Digi21.WinUI.Ribbon;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace RibbonGallery;
 
@@ -14,6 +15,7 @@ public sealed partial class MainWindow : Window
 
     private int renames;
     private int added;
+    private int links;
 
     public MainWindow()
     {
@@ -45,6 +47,26 @@ public sealed partial class MainWindow : Window
 
         Ribbon.TabDeactivated += (_, tab) =>
             ContextualResult.Text = $"'{tab.Label}' has gone, and the ribbon is showing '{Ribbon.SelectedTab?.Label}'";
+
+        // A command for each half of the split button and for each item in its menu. Remove link
+        // asks whether there is a link to remove, and the item greys itself out while there is not.
+        var remove = new XamlUICommand();
+        remove.ExecuteRequested += (_, _) => Links(-links);
+        remove.CanExecuteRequested += (_, arguments) => arguments.CanExecute = links > 0;
+
+        Link.Command = Command(() => Links(1, "a link to a web page"));
+        LinkToHeading.Command = Command(() => Links(1, "a link to a heading"));
+        LinkToEmail.Command = Command(() => Links(1, "an email link"));
+        RemoveLink.Command = remove;
+
+        void Links(int change, string? what = null)
+        {
+            links += change;
+            remove.NotifyCanExecuteChanged();
+            LinkResult.Text = what is null
+                ? "Every link removed"
+                : $"Inserted {what} - {links} link{(links == 1 ? string.Empty : "s")} in all";
+        }
     }
 
     // Also used by the screenshot run. The contextual tabs are switched on and the ribbon put back
@@ -67,6 +89,14 @@ public sealed partial class MainWindow : Window
             ElementTheme.Dark => 2,
             _ => 0,
         };
+    }
+
+    private static XamlUICommand Command(Action run)
+    {
+        var command = new XamlUICommand();
+        command.ExecuteRequested += (_, _) => run();
+
+        return command;
     }
 
     private void ShowMinimizedState()

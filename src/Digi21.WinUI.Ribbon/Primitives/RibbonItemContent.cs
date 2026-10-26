@@ -54,6 +54,12 @@ public sealed partial class RibbonItemContent : Panel
         VerticalAlignment = VerticalAlignment.Center,
     };
 
+    // Which half of a split button is out of action. A split button draws its two halves with one
+    // content - the shapes are this panel's to decide, and two panels would decide them twice - so
+    // the half that greys out is greyed out in here, part by part.
+    private bool primaryDimmed;
+    private bool secondaryDimmed;
+
     /// <summary>Initializes a new instance of the <see cref="RibbonItemContent"/> class.</summary>
     public RibbonItemContent()
     {
@@ -145,22 +151,12 @@ public sealed partial class RibbonItemContent : Panel
 
         if (ItemSize == RibbonItemSize.Large)
         {
-            // Centred down the column rather than started at the top of it. An item drawn Large takes
-            // the whole height of the group whatever it measures, and a group holding a stack of
-            // controls beside its buttons is taller than three rows of the ribbon's own - which used
-            // to leave a Large button's icon and name pressed against the top of a highlight running
-            // forty pixels past the bottom of them.
-            double content = (showsIcon ? side + RibbonMetrics.ItemPadding : 0)
-                + (showsLabel ? label.DesiredSize.Height : 0)
-                + (ShowsChevron ? mark : 0);
+            (double iconTop, double top) = Column(finalSize.Height);
 
-            double iconTop = Math.Max(RibbonMetrics.ItemPadding, (finalSize.Height - content) / 2);
             if (showsIcon)
             {
                 iconBox.Arrange(new Rect((finalSize.Width - side) / 2, iconTop, side, side));
             }
-
-            double top = iconTop + (showsIcon ? side + RibbonMetrics.ItemPadding : 0);
 
             if (showsLabel)
             {
@@ -181,6 +177,8 @@ public sealed partial class RibbonItemContent : Panel
                     mark,
                     mark));
             }
+
+            ApplyDimming(large: true);
 
             return finalSize;
         }
@@ -204,7 +202,81 @@ public sealed partial class RibbonItemContent : Panel
             chevron.Arrange(new Rect(x, (finalSize.Height - mark) / 2, mark, mark));
         }
 
+        ApplyDimming(large: false);
+
         return finalSize;
+    }
+
+    // Greys out the half of a split button that cannot be used: its command cannot run, or the whole
+    // item is disabled and both of them are.
+    internal void Dim(bool primary, bool secondary)
+    {
+        primaryDimmed = primary;
+        secondaryDimmed = secondary;
+        InvalidateArrange();
+    }
+
+    // How much of the far end of an item of this size belongs to the half of a split button that
+    // opens: the chevron and the room around it beside a label, and the label and the chevron under
+    // an icon. Asked by the split button before it arranges its halves, so it is worked out from what
+    // the measure pass left rather than from an arrange that has not happened yet.
+    internal double SecondaryExtent(Size size)
+    {
+        if (ItemSize != RibbonItemSize.Large)
+        {
+            // From where the chevron starts to the end. Beside a label the chevron is at the end of
+            // the item; on its own it follows the icon with no gap, and an item stretched across a
+            // column wider than itself leaves the rest of the column to the half that opens rather
+            // than to a command whose icon is nowhere near it.
+            bool showsLabel = label.Visibility == Visibility.Visible;
+            double chevronLeft = size.Width - RibbonMetrics.ItemPadding - (ShowsChevron ? RibbonMetrics.ChevronSize : 0);
+
+            if (!showsLabel)
+            {
+                chevronLeft = RibbonMetrics.ItemPadding + (IconSource is null ? 0 : RibbonMetrics.SmallIconSize);
+            }
+
+            return size.Width - chevronLeft;
+        }
+
+        // Office's large split button: the icon is the command, and the name with the chevron under
+        // it is what opens. Halfway into the gap between them, so neither half is drawn touching the
+        // other's edge.
+        return IconSource is null
+            ? size.Height / 2
+            : size.Height - Column(size.Height).LabelTop + (RibbonMetrics.ItemPadding / 2);
+    }
+
+    // Where the icon and the label start down an item drawn Large.
+    //
+    // Centred down the column rather than started at the top of it. An item drawn Large takes the
+    // whole height of the group whatever it measures, and a group holding a stack of controls beside
+    // its buttons is taller than three rows of the ribbon's own - which used to leave a Large button's
+    // icon and name pressed against the top of a highlight running forty pixels past the bottom of
+    // them.
+    private (double IconTop, double LabelTop) Column(double height)
+    {
+        bool showsIcon = IconSource is not null;
+        bool showsLabel = label.Visibility == Visibility.Visible;
+
+        double content = (showsIcon ? RibbonMetrics.LargeIconSize + RibbonMetrics.ItemPadding : 0)
+            + (showsLabel ? label.DesiredSize.Height : 0)
+            + (ShowsChevron ? RibbonMetrics.ChevronSize : 0);
+
+        double iconTop = Math.Max(RibbonMetrics.ItemPadding, (height - content) / 2);
+
+        return (iconTop, iconTop + (showsIcon ? RibbonMetrics.LargeIconSize + RibbonMetrics.ItemPadding : 0));
+    }
+
+    private void ApplyDimming(bool large)
+    {
+        const double Dimmed = 0.4;
+
+        // The label is part of what opens when it is under the icon, and part of the command when it
+        // is beside it - the same line SecondaryExtent draws between the halves.
+        iconBox.Opacity = primaryDimmed ? Dimmed : 1;
+        label.Opacity = (large ? secondaryDimmed : primaryDimmed) ? Dimmed : 1;
+        chevron.Opacity = secondaryDimmed ? Dimmed : 1;
     }
 
     private static void OnContentChanged(DependencyObject content, DependencyPropertyChangedEventArgs arguments)
