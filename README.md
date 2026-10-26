@@ -102,6 +102,11 @@ what the library is measured against:
   command, which is also the way out of a hosted `NumberBox` that has taken the arrow keys for its
   caret, and out of the ribbon from the strip, back to whatever the focus came in from.
   [docs/keyboard.md](https://github.com/digi21/Ribbon/blob/main/docs/keyboard.md) is the table.
+- **Room beside the tabs**: `TabStripBounds` is the rectangle the tab names take, as wide as they
+  need rather than as wide as the strip they are stretched across, and `TabStripBoundsChanged` says
+  when it moves - a contextual tab arriving, a tab renamed, a change of display scale. It is what a
+  window that extends into its title bar needs to put its own commands to the right of the tabs and
+  to keep the window from being made narrow enough to cover them.
 - **Correct at 100 %, 125 %, 150 % and 200 %.**
 - **The consumer supplies the text, already translated.** The library does not translate ribbon
   content; only the eight sentences it says on its own account, which are resource keys like its

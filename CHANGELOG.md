@@ -54,6 +54,12 @@ The next release is **2.0.0**: the one entry below is a breaking change, and the
   regression nobody notices for a long time. An application that drives its translations from this
   list rather than typing the eight names out again turns a key renamed here into an exception at
   startup. One read-only member in place of eight settable ones.
+- `Ribbon.TabStripBounds` and `Ribbon.TabStripBoundsChanged`: the rectangle the tab names take, in
+  effective pixels and in the ribbon's own coordinates, and an event raised whenever it moves and
+  whenever the display scale changes. The rectangle is as wide as the tabs need, not as wide as the
+  panel they sit in - that panel is stretched across the ribbon, so its size says nothing about the
+  tabs and its `SizeChanged` is silent when a contextual tab arrives. In a window too narrow for the
+  tabs it still says what they need, which is the number to set a minimum window width from.
 
 ### Fixed
 

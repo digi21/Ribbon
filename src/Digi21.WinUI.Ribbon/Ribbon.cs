@@ -168,6 +168,9 @@ public partial class Ribbon : Control
         // The rest of the keyboard, which is about the focus rather than about one shortcut: where
         // Tab comes in, what the arrows do once it is in, and where Esc sends it back to.
         ConfigureKeyboard();
+
+        // And where the tab names end up, for an application that puts something beside them.
+        ConfigureTabStrip();
     }
 
     /// <summary>Occurs when the tab on show changes.</summary>
@@ -434,6 +437,10 @@ public partial class Ribbon : Control
             InvalidateMeasure();
         }
 
+        // Where the strip has been put, now that it has been put somewhere. Its own arrange has
+        // already said how wide the tabs are, and said it from wherever the strip stood before.
+        UpdateTabStripBounds(rescaled: false);
+
         return arranged;
     }
 
@@ -450,6 +457,8 @@ public partial class Ribbon : Control
         minimizeGlyph = GetTemplateChild(MinimizeGlyphPart) as FontIcon;
         overlay = GetTemplateChild(OverlayPart) as Popup;
         overlayHost = GetTemplateChild(OverlayHostPart) as Border;
+
+        AttachTabStrip(tabStrip);
 
         if (minimize is not null)
         {

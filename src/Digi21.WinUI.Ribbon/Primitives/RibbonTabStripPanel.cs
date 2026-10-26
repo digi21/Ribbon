@@ -27,12 +27,25 @@ public sealed partial class RibbonTabStripPanel : Panel
     /// <remarks>Here rather than in the template, because a band has to span the gaps between the tabs it covers and cannot ask the template what they are.</remarks>
     internal const double Spacing = 2;
 
+    // Raised at the end of every arrange, for the ribbon to read where its tabs ended up. An arrange
+    // and not SizeChanged, because the panel is stretched to the width of the ribbon: a tab arriving
+    // or a name changing language moves where the tabs end without moving where the panel does.
+    internal event EventHandler? Arranged;
+
+    // What the tabs and the bands over them need, as this panel worked it out. Kept rather than read
+    // back from DesiredSize, which WinUI clips to the room the panel was offered: in a window too
+    // narrow for its tabs that is the width of the window, and the width the tabs need is exactly the
+    // number an application sets the window's minimum width from.
+    internal Size Natural { get; private set; }
+
     /// <inheritdoc/>
     protected override Size MeasureOverride(Size availableSize)
     {
         Strip strip = Read(measure: true);
 
-        return new Size(strip.Width, strip.Bands + strip.Tabs);
+        Natural = new Size(strip.Width, strip.Bands + strip.Tabs);
+
+        return Natural;
     }
 
     /// <inheritdoc/>
@@ -62,6 +75,8 @@ public sealed partial class RibbonTabStripPanel : Panel
             // is the whole reason a tab arriving does not move the window - would go with it.
             heading.Arrange(new Rect(left, 0, width, strip.Bands));
         }
+
+        Arranged?.Invoke(this, EventArgs.Empty);
 
         return finalSize;
     }
